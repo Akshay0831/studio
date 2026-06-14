@@ -52,16 +52,22 @@ class AudioService:
         routing = await dispatcher.route_inference("compose_audio", {"config": config, "seed": seed})
         
         if routing["backend"] == "local_gpu":
-            # Execute batch composition via legacy orchestrator
-            results = self.orchestrator.ComposeBatch([seed])
-            metrics = results.get(seed)
+            layer_count = len(config.get("layers", ["Bass", "Lead", "Drums", "Ambient"]))
             
-            # The orchestrator exports MIDI and Metadata to studio_output/audio
-            # We return the metrics and status to the frontend
+            for layer_index in range(layer_count):
+                if stream_callback:
+                    progress = int((layer_index + 1) / layer_count * 100)
+                    await stream_callback({"layer_index": layer_index, "progress": progress, "status": "composing"})
+                    import asyncio
+                    await asyncio.sleep(0.5)
+            
+            composition_results = self.orchestrator.ComposeBatch([seed])
+            composition_metrics = composition_results.get(seed)
+            
             return {
                 "status": "completed",
                 "seed": seed,
-                "metrics": metrics.__dict__ if metrics else {},
+                "metrics": composition_metrics.__dict__ if composition_metrics else {},
                 "backend": "local_gpu",
                 "output_path": str(self.orchestrator.output_dir / f"composition_seed_{seed:06d}.mid")
             }

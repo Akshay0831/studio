@@ -92,23 +92,34 @@ class ArtService:
         stream_callback: Optional[Callable] = None
     ) -> Dict[str, Any]:
         """Local GPU generation with caching and optimizations."""
-        pipe = self.model_manager.GetPipeline(
+        diffusion_pipeline = self.model_manager.GetPipeline(
             model_type, 
             pipeline_type="txt2img",
-            quantization=QuantizationType.NONE # Future: support quantization from config
+            quantization=QuantizationType.NONE
         )
         
         generator = torch.Generator(device=self.device).manual_seed(seed)
-        
+        inference_steps = config.get("steps", 30)
+
+        def callback_on_step_end(pipe, i, t, callback_kwargs):
+            if stream_callback:
+                import asyncio
+                progress = int((i + 1) / inference_steps * 100)
+                asyncio.run_coroutine_threadsafe(
+                    stream_callback({"step": i, "total_steps": inference_steps, "progress": progress}),
+                    asyncio.get_event_loop()
+                )
+            return callback_kwargs
+
         with torch.inference_mode():
-            # Support basic streaming by splitting steps (advanced implementation)
-            output = pipe(
+            generation_output = diffusion_pipeline(
                 prompt=prompt,
-                num_inference_steps=config.get("steps", 30),
-                generator=generator
+                num_inference_steps=inference_steps,
+                generator=generator,
+                callback_on_step_end=callback_on_step_end if stream_callback else None
             )
             
-        final_image = output.images[0]
+        final_image = generation_output.images[0]
         return {
             "image_b64": self._pil_to_b64(final_image),
             "seed": seed,
@@ -128,38 +139,50 @@ class ArtService:
         base_image = self._b64_to_pil(base_image_b64)
         mask_image = self._b64_to_pil(mask_image_b64)
         
-        # Fallback to img2img if inpaint model not specified (legacy behavior)
         model_name = config.get("model", "sdxl").upper()
         try:
             model_type = ModelType[model_name]
         except KeyError:
             model_type = ModelType.SDXL
 
-        pipe = self.model_manager.GetPipeline(
+        diffusion_pipeline = self.model_manager.GetPipeline(
             model_type,
             pipeline_type="img2img" if not mask_image_b64 else "inpaint"
         )
         
         generator = torch.Generator(device=self.device).manual_seed(seed)
-        
+        inference_steps = config.get("steps", 30)
+
+        def callback_on_step_end(pipe, i, t, callback_kwargs):
+            if stream_callback:
+                import asyncio
+                progress = int((i + 1) / inference_steps * 100)
+                asyncio.run_coroutine_threadsafe(
+                    stream_callback({"step": i, "total_steps": inference_steps, "progress": progress}),
+                    asyncio.get_event_loop()
+                )
+            return callback_kwargs
+
         with torch.inference_mode():
             if mask_image_b64:
-                output = pipe(
+                generation_output = diffusion_pipeline(
                     prompt=prompt,
                     image=base_image,
                     mask_image=mask_image,
-                    num_inference_steps=config.get("steps", 30),
-                    generator=generator
+                    num_inference_steps=inference_steps,
+                    generator=generator,
+                    callback_on_step_end=callback_on_step_end if stream_callback else None
                 )
             else:
-                output = pipe(
+                generation_output = diffusion_pipeline(
                     prompt=prompt,
                     image=base_image,
-                    num_inference_steps=config.get("steps", 30),
-                    generator=generator
+                    num_inference_steps=inference_steps,
+                    generator=generator,
+                    callback_on_step_end=callback_on_step_end if stream_callback else None
                 )
             
-        final_image = output.images[0]
+        final_image = generation_output.images[0]
         return {
             "image_b64": self._pil_to_b64(final_image),
             "seed": seed,

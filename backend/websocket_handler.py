@@ -1,16 +1,18 @@
 import json
 import logging
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import List, Dict, Any
-
-from studio.backend.art_service import art_service
-from studio.backend.audio_service import audio_service
+from typing import List, Dict, Any, Callable, Awaitable
 
 logger = logging.getLogger("studio.backend.websocket_handler")
 
 class WebSocketManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.handlers: Dict[str, Callable[[WebSocket, Dict[str, Any]], Awaitable[None]]] = {}
+
+    def register_handler(self, msg_type: str, handler: Callable[[WebSocket, Dict[str, Any]], Awaitable[None]]):
+        self.handlers[msg_type] = handler
+        logger.info(f"Registered handler for: {msg_type}")
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -26,12 +28,9 @@ class WebSocketManager:
             data = json.loads(message)
             msg_type = data.get("type")
             
-            if msg_type == "generate_image":
-                await self._handle_generate_image(websocket, data)
-            elif msg_type == "regenerate_audio":
-                await self._handle_regenerate_audio(websocket, data)
-            elif msg_type == "yjs_sync":
-                await self._handle_yjs_sync(websocket, data)
+            handler = self.handlers.get(msg_type)
+            if handler:
+                await handler(websocket, data)
             else:
                 await websocket.send_json({"type": "error", "message": f"Unknown message type: {msg_type}"})
                 
@@ -41,57 +40,74 @@ class WebSocketManager:
             logger.error(f"Error handling WebSocket message: {e}")
             await websocket.send_json({"type": "error", "message": str(e)})
 
-    async def _handle_generate_image(self, websocket: WebSocket, data: Dict[str, Any]):
-        prompt = data.get("prompt")
-        seed = data.get("seed", 42)
-        config = data.get("config", {})
-        
-        async def stream_callback(chunk):
+manager = WebSocketManager()
+
+# --- Registry Initialization ---
+from studio.backend.art_service import art_service
+from studio.backend.audio_service import audio_service
+
+async def handle_generate_image(websocket: WebSocket, payload: Dict[str, Any]):
+    prompt = payload.get("prompt")
+    variation_count = payload.get("num_variations", 1)
+    base_seed = payload.get("seed", 42)
+    generation_config = payload.get("config", {})
+    seeds = [base_seed + i for i in range(variation_count)]
+    
+    for i, seed in enumerate(seeds):
+        async def stream_callback(chunk, index=i):
             await websocket.send_json({
                 "type": "image_chunk",
+                "variation_index": index,
                 "data": chunk
             })
-            
-        result = await art_service.generate(prompt, seed, config, stream_callback)
+        
+        generation_result = await art_service.generate(prompt, seed, generation_config, stream_callback)
         await websocket.send_json({
             "type": "generation_complete",
-            "result": result
+            "variation_index": i,
+            "result": generation_result
         })
 
-    async def _handle_regenerate_audio(self, websocket: WebSocket, data: Dict[str, Any]):
-        config = data.get("config", {})
-        seed = data.get("seed", 42)
-        
-        async def stream_callback(chunk):
-            await websocket.send_json({
-                "type": "audio_chunk",
-                "data": chunk
-            })
-            
-        result = await audio_service.compose(config, seed, stream_callback)
+async def handle_regenerate_audio(websocket: WebSocket, payload: Dict[str, Any]):
+    composition_config = payload.get("config", {})
+    seed = payload.get("seed", 42)
+    
+    async def stream_callback(chunk):
         await websocket.send_json({
-            "type": "composition_complete",
-            "result": result
+            "type": "audio_chunk",
+            "data": chunk
         })
+        
+    composition_result = await audio_service.compose(composition_config, seed, stream_callback)
+    await websocket.send_json({
+        "type": "composition_complete",
+        "result": composition_result
+    })
 
-    async def _handle_yjs_sync(self, websocket: WebSocket, data: Dict[str, Any]):
-        # Broadcoast Yjs update to all other clients
-        # In a real scenario, this would involve binary state merging
-        update = data.get("update")
-        for connection in self.active_connections:
-            if connection != websocket:
-                await connection.send_json({
-                    "type": "yjs_update",
-                    "update": update
-                })
+async def handle_yjs_sync(websocket: WebSocket, data: Dict[str, Any]):
+    update = data.get("update")
+    for connection in manager.active_connections:
+        if connection != websocket:
+            await connection.send_json({
+                "type": "yjs_update",
+                "update": update
+            })
 
-manager = WebSocketManager()
+# Register Core/Feature handlers
+manager.register_handler("generate_image", handle_generate_image)
+manager.register_handler("regenerate_audio", handle_regenerate_audio)
+manager.register_handler("yjs_sync", handle_yjs_sync)
 
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            data = await websocket.receive_text()
-            await manager.handle_message(websocket, data)
+            message = await websocket.receive()
+            if "text" in message:
+                await manager.handle_message(websocket, message["text"])
+            elif "bytes" in message:
+                for connection in manager.active_connections:
+                    if connection != websocket:
+                        await connection.send_bytes(message["bytes"])
     except WebSocketDisconnect:
         manager.disconnect(websocket)

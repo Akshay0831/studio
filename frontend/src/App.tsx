@@ -1,8 +1,13 @@
 import { Activity, Settings, Github, Wifi, WifiOff } from 'lucide-react'
-import ImageEditor from './components/ImageEditor'
-import AudioMixer from './components/AudioMixer'
+import ImageEditor from './features/art/ImageEditor'
+import AudioMixer from './features/audio/AudioMixer'
 import ChatPanel from './components/ChatPanel'
-import { useStudioStore } from './hooks/useStudioStore'
+import { useStudioStore } from './core/useStudioStore'
+
+const FEATURES = {
+  IMAGE: true,
+  AUDIO: true
+};
 
 const StatusBar = ({ connected }: { connected: boolean }) => (
   <div className={`h-6 ${connected ? 'bg-studio-accent' : 'bg-red-500'} text-white flex items-center px-3 justify-between text-[10px] font-medium transition-colors duration-500`}>
@@ -37,8 +42,8 @@ function App() {
     <div className="flex flex-col h-full overflow-hidden font-sans select-none bg-studio-bg">
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1 flex flex-col overflow-hidden">
-          <ImageEditor />
-          <AudioMixer />
+          {FEATURES.IMAGE && <ImageEditor />}
+          {FEATURES.AUDIO && <AudioMixer />}
         </div>
         <ChatPanel />
       </div>
