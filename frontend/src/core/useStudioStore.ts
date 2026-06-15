@@ -1,66 +1,64 @@
 import { useEffect, useState } from 'react';
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
+import { EXTENSION_REGISTRY } from '../features/registry';
 
 const yDoc = new Y.Doc();
+const featureMaps: Record<string, Y.Map<any>> = {};
+EXTENSION_REGISTRY.forEach(ext => {
+  featureMaps[ext.stateKey] = yDoc.getMap(ext.stateKey);
+});
 
-const yImage = yDoc.getMap('image');
-const yAudio = yDoc.getMap('audio');
-const yPrompt = yDoc.getMap('prompt');
 const yCollaboration = yDoc.getMap('collaboration');
+const yPrompt = yDoc.getMap('prompt');
+
+let provider: WebsocketProvider | null = null;
+let apiSocket: WebSocket | null = null;
+let listeners: Set<() => void> = new Set();
+let lastMessage: any = null;
+let users: Record<number, any> = {};
+let isConnected = false;
+
+const notify = () => listeners.forEach(l => l());
+
+const startConnection = () => {
+  if (provider) return;
+  const wsUrl = (import.meta.env.VITE_WS_URL as string) || `ws://${window.location.host}/ws`;
+  provider = new WebsocketProvider(wsUrl, 'studio-project', yDoc);
+  const name = `User ${Math.floor(Math.random() * 1000)}`;
+  const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+  provider.awareness.setLocalStateField('user', { name, color });
+  provider.awareness.on('change', () => {
+    const states = provider!.awareness.getStates();
+    const currentUsers: Record<number, any> = {};
+    states.forEach((state: any, id: number) => { if (state.user) currentUsers[id] = state.user; });
+    users = currentUsers;
+    notify();
+  });
+  apiSocket = new WebSocket(wsUrl);
+  apiSocket.onopen = () => { isConnected = true; notify(); };
+  apiSocket.onmessage = (e) => { try { lastMessage = JSON.parse(e.data); notify(); } catch {} };
+  apiSocket.onclose = () => { isConnected = false; notify(); };
+};
 
 export const useStudioStore = () => {
-  const [isConnected, setConnectionStatus] = useState(false);
-  const [apiSocket, setApiSocket] = useState<WebSocket | null>(null);
-  const [lastMessage, setLastMessage] = useState<any>(null);
-
+  const [, setUpdate] = useState(0);
   useEffect(() => {
-    const wsUrl = (import.meta.env.VITE_WS_URL as string) || `ws://${window.location.host}/ws`;
-    
-    // Yjs Provider for CRDT state synchronization
-    const provider = new WebsocketProvider(wsUrl, 'studio-project', yDoc);
-
-    // Custom WebSocket for real-time API commands and streaming responses
-    const newApiSocket = new WebSocket(wsUrl);
-    setApiSocket(newApiSocket);
-
-    newApiSocket.onopen = () => {
-      setConnectionStatus(true);
-    };
-
-    newApiSocket.onmessage = (event) => {
-      try {
-        const receivedMessage = JSON.parse(event.data);
-        setLastMessage(receivedMessage);
-      } catch (error) {
-        // Handle non-JSON messages (e.g. binary Yjs updates if intercepted)
-      }
-    };
-
-    newApiSocket.onclose = () => {
-      setConnectionStatus(false);
-    };
-
-    return () => {
-      provider.destroy();
-      newApiSocket.close();
-    };
+    startConnection();
+    const l = () => setUpdate(v => v + 1);
+    listeners.add(l);
+    return () => { listeners.delete(l); };
   }, []);
-
-  const sendMessage = (payload: any) => {
-    if (apiSocket && apiSocket.readyState === WebSocket.OPEN) {
-      apiSocket.send(JSON.stringify(payload));
-    }
-  };
-
   return {
     yDoc,
-    yImage,
-    yAudio,
+    featureMaps,
+    yImage: featureMaps['image'],
+    yAudio: featureMaps['audio'],
     yPrompt,
     yCollaboration,
     connected: isConnected,
-    sendMessage,
-    lastMessage
+    users,
+    lastMessage,
+    sendMessage: (msg: any) => { if (apiSocket?.readyState === WebSocket.OPEN) apiSocket.send(JSON.stringify(msg)); }
   };
 };

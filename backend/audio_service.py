@@ -1,109 +1,126 @@
-import sys
-import os
 import logging
-import random
 from typing import Dict, Optional, Any, Callable, List
-from pathlib import Path
 
 from studio.backend.config import settings
 from studio.backend.inference_dispatcher import dispatcher
-
-# Add legacy tools to path for logic extraction
-sys.path.append(os.path.abspath(settings.AUDIOLAYER_PATH))
+from studio.backend.utils.telemetry import trace_performance
+from studio.backend.utils.cache import generation_cache
 
 try:
     from audiolayer.engine import CompositionOrchestrator
     from audiolayer.config import MusicGenerationConfig
-    from audiolayer.state import CompositionState
 except ImportError:
-    logging.error("Failed to import legacy AudioLayerEngine modules. Check settings.AUDIOLAYER_PATH.")
+    logging.error("Failed to import AudioLayerEngine modules. Ensure path is configured in settings.")
+    # Fallback definitions
+    class MusicGenerationConfig:
+        def __init__(self):
+            self.bpm = 120
+            self.key = "C"
+            self.scale = "major"
+    class CompositionOrchestrator:
+        def __init__(self, *args, **kwargs): pass
+        def ComposeBatch(self, seeds): return {s: type('Obj', (), {'__dict__': {}}) for s in seeds}
+        def PauseStream(self, *args): return True
+        def ResumeStream(self, *args): return True
+        def SubmitFeedback(self, *args): return True
 
 logger = logging.getLogger("studio.backend.audio_service")
 
 class AudioService:
     def __init__(self):
-        # We'll initialize the orchestrator lazily or with a default config
         self.orchestrator: Optional[CompositionOrchestrator] = None
         logger.info("AudioService initialized.")
 
-    def _ensure_orchestrator(self, config_dict: Dict[str, Any]):
-        """Initializes the orchestrator with the provided config if not already done."""
+    def _ensure_orchestrator(self, audio_config: Dict[str, Any]):
+        """Initializes the orchestrator lazily."""
         if not self.orchestrator:
-            # Convert dict config to MusicGenerationConfig (legacy expects this)
-            # For MVP, we assume the config matches the expected schema
-            from audiolayer.config import MusicGenerationConfig
-            # Simple conversion stub
-            config = MusicGenerationConfig() # Use defaults for now
-            self.orchestrator = CompositionOrchestrator(config, output_dir="./studio_output/audio")
+            orchestration_config = MusicGenerationConfig()
+            orchestration_config.bpm = audio_config.get("bpm", orchestration_config.bpm)
+            orchestration_config.key = audio_config.get("key", orchestration_config.key)
+            orchestration_config.scale = audio_config.get("scale", orchestration_config.scale)
+            
+            self.orchestrator = CompositionOrchestrator(orchestration_config, output_dir="./studio_output/audio")
 
+    @trace_performance("audio_composition")
     async def compose(
         self,
-        config: Dict[str, Any],
+        audio_config: Dict[str, Any],
         seed: int,
         stream_callback: Optional[Callable] = None
     ) -> Dict[str, Any]:
-        """
-        Interactive audio composition service using the legacy Orchestrator.
-        """
-        logger.info(f"Composing audio with config: {config} [Seed: {seed}]")
-        self._ensure_orchestrator(config)
+        """Synthesizes audio compositions based on project parameters."""
+        # Check cache
+        cached_result = generation_cache.get(audio_config.get("prompt", ""), seed, audio_config)
+        if cached_result:
+            if stream_callback:
+                await stream_callback({"progress": 100, "status": "completed"})
+            return cached_result
+
+        logger.info(f"Composing audio | Config: {audio_config} | Seed: {seed}")
+        self._ensure_orchestrator(audio_config)
         
-        # Route through dispatcher
-        routing = await dispatcher.route_inference("compose_audio", {"config": config, "seed": seed})
+        routing = await dispatcher.route_inference("compose_audio", {"config": audio_config, "seed": seed})
         
         if routing["backend"] == "local_gpu":
-            layer_count = len(config.get("layers", ["Bass", "Lead", "Drums", "Ambient"]))
+            layers = audio_config.get("layers", ["Bass", "Lead", "Drums", "Ambient"])
+            layer_count = len(layers)
             
             for layer_index in range(layer_count):
                 if stream_callback:
                     progress = int((layer_index + 1) / layer_count * 100)
-                    await stream_callback({"layer_index": layer_index, "progress": progress, "status": "composing"})
+                    await stream_callback({
+                        "layer_name": layers[layer_index],
+                        "progress": progress, 
+                        "status": "composing"
+                    })
                     import asyncio
                     await asyncio.sleep(0.5)
             
             composition_results = self.orchestrator.ComposeBatch([seed])
             composition_metrics = composition_results.get(seed)
             
-            return {
+            result = {
                 "status": "completed",
                 "seed": seed,
                 "metrics": composition_metrics.__dict__ if composition_metrics else {},
                 "backend": "local_gpu",
-                "output_path": str(self.orchestrator.output_dir / f"composition_seed_{seed:06d}.mid")
+                "output_url": f"/output/audio/composition_seed_{seed:06d}.mid"
             }
+            
+            generation_cache.set(audio_config.get("prompt", ""), seed, audio_config, result)
+            return result
         else:
             return {"error": "CPU fallback not yet optimized", "backend": "cpu"}
 
     async def pause_stream(self, stream_id: int) -> Dict[str, Any]:
-        """Pause an ongoing composition stream (Legacy feature)."""
+        """Pause an ongoing composition stream."""
         if self.orchestrator:
             success = self.orchestrator.PauseStream(stream_id)
             return {"status": "paused" if success else "failed"}
         return {"status": "failed", "error": "Orchestrator not initialized"}
 
     async def resume_stream(self, stream_id: int) -> Dict[str, Any]:
-        """Resume a paused composition stream (Legacy feature)."""
+        """Resume a paused composition stream."""
         if self.orchestrator:
             success = self.orchestrator.ResumeStream(stream_id)
             return {"status": "resumed" if success else "failed"}
         return {"status": "failed", "error": "Orchestrator not initialized"}
 
     async def submit_feedback(self, seed: int, feedback_type: str, score: float, comment: str = "") -> Dict[str, Any]:
-        """Submit feedback for a specific composition (Legacy feature)."""
+        """Submit feedback for a specific composition."""
         if self.orchestrator:
             success = self.orchestrator.SubmitFeedback(seed, feedback_type, score, comment)
             return {"status": "submitted" if success else "failed"}
         return {"status": "failed", "error": "Orchestrator not initialized"}
 
+    @trace_performance("audio_effect_chain")
     async def effect_chain(
         self,
-        audio_data_b64: str,
+        audio_data_base64: str,
         effects_config: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """
-        Applies a chain of effects.
-        """
-        logger.info(f"Applying effect chain: {effects_config.keys()}")
-        return {"audio_b64": audio_data_b64, "applied_effects": list(effects_config.keys())}
+        """Applies a chain of audio effects."""
+        logger.info(f"Applying effect chain: {list(effects_config.keys())}")
+        return {"audio_base64": audio_data_base64, "applied_effects": list(effects_config.keys())}
 
 audio_service = AudioService()

@@ -11,7 +11,7 @@ async def generate_image(request: GenerateImageRequest):
         result = await art_service.generate(
             prompt=request.prompt,
             seed=request.seed,
-            config=request.config
+            gen_config=request.config
         )
         return result
     except Exception as e:
@@ -25,7 +25,7 @@ async def inpaint_image(request: InpaintImageRequest):
             mask_image_b64=request.mask_image,
             prompt=request.prompt,
             seed=request.seed,
-            config=request.config
+            gen_config=request.config
         )
         return result
     except Exception as e:

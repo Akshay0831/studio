@@ -9,7 +9,7 @@ router = APIRouter(prefix="/audio", tags=["audio"])
 async def compose_audio(request: ComposeAudioRequest):
     try:
         result = await audio_service.compose(
-            config=request.model_dump(),
+            audio_config=request.model_dump(),
             seed=request.seed
         )
         return result
