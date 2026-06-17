@@ -24,12 +24,14 @@ except ImportError:
         def ResumeStream(self, *args): return True
         def SubmitFeedback(self, *args): return True
 
+from studio.backend.utils.base_service import BaseStudioService
+
 logger = logging.getLogger("studio.backend.audio_service")
 
-class AudioService:
+class AudioService(BaseStudioService):
     def __init__(self):
+        super().__init__("audio")
         self.orchestrator: Optional[CompositionOrchestrator] = None
-        logger.info("AudioService initialized.")
 
     def _ensure_orchestrator(self, audio_config: Dict[str, Any]):
         """Initializes the orchestrator lazily."""
@@ -38,6 +40,10 @@ class AudioService:
             orchestration_config.bpm = audio_config.get("bpm", orchestration_config.bpm)
             orchestration_config.key = audio_config.get("key", orchestration_config.key)
             orchestration_config.scale = audio_config.get("scale", orchestration_config.scale)
+            
+            # Composer engine selection
+            composer = audio_config.get("composer", "standard")
+            logger.info(f"Audio Service | Using composer: {composer}")
             
             self.orchestrator = CompositionOrchestrator(orchestration_config, output_dir="./studio_output/audio")
 
@@ -62,21 +68,15 @@ class AudioService:
         routing = await dispatcher.route_inference("compose_audio", {"config": audio_config, "seed": seed})
         
         if routing["backend"] == "local_gpu":
-            layers = audio_config.get("layers", ["Bass", "Lead", "Drums", "Ambient"])
-            layer_count = len(layers)
+            composition_results = await self.run_with_progress(
+                operation="audio_composition",
+                params={"seeds": [seed]},
+                handler=self.orchestrator.ComposeBatch,
+                stream_callback=stream_callback,
+                simulated_steps=8,
+                simulation_interval=0.5
+            )
             
-            for layer_index in range(layer_count):
-                if stream_callback:
-                    progress = int((layer_index + 1) / layer_count * 100)
-                    await stream_callback({
-                        "layer_name": layers[layer_index],
-                        "progress": progress, 
-                        "status": "composing"
-                    })
-                    import asyncio
-                    await asyncio.sleep(0.5)
-            
-            composition_results = self.orchestrator.ComposeBatch([seed])
             composition_metrics = composition_results.get(seed)
             
             result = {

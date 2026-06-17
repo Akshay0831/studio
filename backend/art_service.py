@@ -8,25 +8,25 @@ from studio.backend.utils.telemetry import trace_performance
 from studio.backend.utils.cache import generation_cache
 from studio.backend.utils.encoding import pil_to_base64, base64_to_pil
 
-try:
-    from artsynthesis.modules import ModelManager, FeedbackIntegration
-    from artsynthesis.utils import DeviceUtils
-    from artsynthesis.config import ModelType, QuantizationType
-except ImportError:
-    logging.error("Failed to import ArtSynthesis modules. Ensure path is configured in settings.")
-    # Fallback definitions to prevent crashes
-    class ModelType:
-        SDXL = "sdxl"
-        FLUX = "flux"
-    class QuantizationType:
-        NONE = "none"
+from studio.backend.utils.dependency_manager import DependencyManager
+
+# Engine imports via safety layer
+ModelManager = DependencyManager.get_attr("artsynthesis.modules", "ModelManager")
+FeedbackIntegration = DependencyManager.get_attr("artsynthesis.modules", "FeedbackIntegration")
+DeviceUtils = DependencyManager.get_attr("artsynthesis.utils", "DeviceUtils")
+ModelType = DependencyManager.get_attr("artsynthesis.config", "ModelType")
+QuantizationType = DependencyManager.get_attr("artsynthesis.config", "QuantizationType")
+
+# Fallbacks if engines are missing
+if not ModelManager:
+    class ModelType: SDXL = "sdxl"; FLUX = "flux"
+    class QuantizationType: NONE = "none"
     class ModelManager:
         def __init__(self): pass
-        def GetPipeline(self, *args, **kwargs): 
+        def GetPipeline(self, *args, **kwargs):
             class DummyPipe:
-                def __call__(self, *args, **kwargs): 
-                    class DummyResult: 
-                        images = [None]
+                def __call__(self, *args, **kwargs):
+                    class DummyResult: images = [None]
                     return DummyResult()
             return DummyPipe()
     class FeedbackIntegration:
@@ -37,15 +37,45 @@ except ImportError:
         @staticmethod
         def GetDevice(): return "cpu"
 
+from studio.backend.utils.batch_processor import batch_processor
+
+from studio.backend.utils.base_service import BaseStudioService
+
 logger = logging.getLogger("studio.backend.art_service")
 
-class ArtService:
+class ArtService(BaseStudioService):
     def __init__(self):
+        super().__init__("art")
         self.model_manager = ModelManager()
         self.feedback_system = FeedbackIntegration()
         self.device = DeviceUtils.GetDevice()
-        logger.info(f"ArtService initialized on device: {self.device}")
+        
+        # Register batch handlers
+        batch_processor.register_handler("generate_image", self._handle_batch_generate)
 
+    async def _handle_batch_generate(self, tasks: List[Any]) -> List[Any]:
+        """Internal handler for BatchProcessor."""
+        if not tasks:
+            return []
+            
+        # Coalesce tasks
+        prompt = tasks[0].params["prompt"] # Simplified: assume same prompt for now
+        seeds = [t.params["seed"] for t in tasks]
+        gen_config = tasks[0].params.get("gen_config", {})
+        
+        async def unified_stream_callback(progress_data):
+            # Broadcast progress to all tasks in the batch
+            import asyncio
+            await asyncio.gather(*[
+                t.callback(progress_data) for t in tasks if t.callback
+            ])
+        
+        model_name = gen_config.get("model", "sdxl").upper()
+        model_type = getattr(ModelType, model_name, ModelType.SDXL)
+        
+        return await self._generate_batch_local(prompt, seeds, gen_config, model_type, unified_stream_callback)
+
+    @trace_performance("generate_image")
     async def generate(
         self,
         prompt: str,
@@ -57,25 +87,29 @@ class ArtService:
         cached_result = generation_cache.get(prompt, seed, gen_config)
         if cached_result:
             if stream_callback:
-                steps = gen_config.get("steps", 30)
-                await stream_callback({"step": steps, "total_steps": steps, "progress": 100})
+                await stream_callback({"progress": 100, "status": "completed"})
             return cached_result
 
         logger.info(f"Generating image | Prompt: {prompt[:50]}... | Seed: {seed}")
         
-        model_name = gen_config.get("model", "sdxl").upper()
-        model_type = getattr(ModelType, model_name, ModelType.SDXL)
-
-        routing = await dispatcher.route_inference("generate_image", {"prompt": prompt, "seed": seed})
+        routing = await self.route_and_execute("generate_image", {"prompt": prompt, "seed": seed})
         
         if routing["backend"] == "local_gpu":
+            model_name = gen_config.get("model", "sdxl").upper()
+            model_type = getattr(ModelType, model_name, ModelType.SDXL)
+            
+            # Using the unified run_with_progress
+            # Note: _generate_local handles its own internal progress via callback_on_step_end
+            # but we can wrap it if we want simulated progress for non-callback pipelines
             result = await self._generate_local(prompt, seed, gen_config, model_type, stream_callback)
+            
+            if result and "error" not in result:
+                generation_cache.set(prompt, seed, gen_config, result)
+            return result
         else:
-            result = await self._generate_cpu(prompt, seed, gen_config)
-        
-        generation_cache.set(prompt, seed, gen_config, result)
-        return result
+            return {"error": "Non-local GPU generation not yet optimized in service layer", "routing": routing}
 
+    @trace_performance("inpaint_image")
     async def inpaint(
         self,
         base_image_b64: str,
@@ -93,21 +127,19 @@ class ArtService:
         cached_result = generation_cache.get(prompt, seed, inpaint_config)
         if cached_result:
             if stream_callback:
-                steps = gen_config.get("steps", 30)
-                await stream_callback({"step": steps, "total_steps": steps, "progress": 100})
+                await stream_callback({"progress": 100, "status": "completed"})
             return cached_result
 
         logger.info(f"Inpainting image | Prompt: {prompt[:50]}... | Seed: {seed}")
         
-        routing = await dispatcher.route_inference("inpaint_image", {"prompt": prompt, "seed": seed})
+        routing = await self.route_and_execute("inpaint_image", {"prompt": prompt, "seed": seed})
         
         if routing["backend"] == "local_gpu":
             result = await self._inpaint_local(base_image_b64, mask_image_b64, prompt, seed, gen_config, stream_callback)
+            generation_cache.set(prompt, seed, inpaint_config, result)
+            return result
         else:
-            result = await self._generate_cpu(prompt, seed, gen_config)
-            
-        generation_cache.set(prompt, seed, inpaint_config, result)
-        return result
+            return {"error": "Fallback inpainting not implemented", "backend": routing["backend"]}
 
     async def generate_batch(
         self,
@@ -171,6 +203,16 @@ class ArtService:
         
         inference_steps = gen_config.get("steps", 30)
         num_images = len(seeds)
+        
+        # Apply model-specific tools
+        if model_type == ModelType.FLUX:
+            if gen_config.get("ultra_detail"):
+                logger.info("Flux Extension | Ultra Detail enabled")
+                inference_steps = int(inference_steps * 1.5)
+        elif model_type == ModelType.SDXL:
+            if gen_config.get("fast_mode"):
+                logger.info("SDXL Extension | Fast Mode enabled")
+                inference_steps = max(10, int(inference_steps * 0.5))
 
         def callback_on_step_end(pipe, i, t, callback_kwargs):
             if stream_callback:

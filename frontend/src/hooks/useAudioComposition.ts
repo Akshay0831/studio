@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useStudioStore } from '../core/useStudioStore';
 
 export const useAudioComposition = () => {
-  const { sendMessage, lastMessage } = useStudioStore();
+  const { sendMessage, lastMessage, yAudio } = useStudioStore();
   const [isComposing, setIsComposing] = useState(false);
   const [composingLayerIndex, setComposingLayerIndex] = useState<number | null>(null);
   const [compositionProgress, setCompositionProgress] = useState(0);
@@ -36,13 +36,23 @@ export const useAudioComposition = () => {
     setCompositionProgress(0);
     setLastOutputUrl(null);
 
+    // Extract notes from yAudio
+    const notes: Record<string, boolean> = {};
+    if (yAudio) {
+      yAudio.forEach((val, key) => {
+        if (key.startsWith('note_')) {
+          notes[key] = val;
+        }
+      });
+    }
+
     sendMessage({
       type: 'regenerate_audio',
       layer_index: layerIndex,
       seed: seed,
-      config: config
+      config: { ...config, notes }
     });
-  }, [sendMessage]);
+  }, [sendMessage, yAudio]);
 
   const cancel = useCallback(() => {
     setIsComposing(false);

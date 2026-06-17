@@ -4,12 +4,22 @@ import { toast } from 'react-hot-toast';
 import { useStudioStore } from '../../core/useStudioStore';
 import { useArtGeneration } from '../../hooks/useArtGeneration';
 
+import { StudioSelect, StudioToggle, StudioSlider } from '../common/components/Controls';
 export const ArtControls: React.FC = () => {
-  const { yPrompt, yImage } = useStudioStore();
-  const { isGenerating, variations, generate, cancel, numVariations, setNumVariations } = useArtGeneration();
+  const { yPrompt, yImage, yHistory } = useStudioStore();
+  const { 
+    isGenerating, 
+    variations, 
+    generate, 
+    cancel, 
+    numVariations, 
+    setNumVariations,
+    model,
+    setModel
+  } = useArtGeneration();
+
   const [prompt, setPrompt] = useState('');
   const [seed, setSeed] = useState(0);
-  const [steps, setSteps] = useState(20);
 
   useEffect(() => {
     if (!yPrompt) return;
@@ -20,27 +30,68 @@ export const ArtControls: React.FC = () => {
       if (typeof s === 'number' && s !== seed) setSeed(s);
     };
     yPrompt.observe(update);
+    update();
     return () => yPrompt.unobserve(update);
   }, [yPrompt, prompt, seed]);
 
   const promote = (data: string) => {
     if (!yImage) return;
     yImage.set('baseImageData', data);
+    // Clear canvas objects when promoting new base image
     yImage.set('canvasData', JSON.stringify({ version: "5.3.0", objects: [] }));
     toast.success('Promoted to canvas');
+
+    if (yHistory) {
+      yHistory.push([{
+        type: 'art',
+        label: prompt || 'Generated Image',
+        preview: `data:image/png;base64,${data}`,
+        timestamp: Date.now()
+      }]);
+    }
   };
+
+
+  const models = [
+    { id: 'sdxl', name: 'Stable Diffusion XL', description: 'Fast, high quality' },
+    { id: 'flux', name: 'FLUX.2-Klein', description: 'State-of-the-art detail' },
+  ];
 
   return (
     <div className="flex flex-col h-full bg-studio-panel p-4 gap-6 custom-scrollbar overflow-y-auto">
+      <StudioSelect 
+        label="Active Model"
+        yMap={yPrompt}
+        stateKey="model"
+        options={models}
+      />
+
+      {model === 'flux' && (
+        <div className="bg-blue-900/10 border border-blue-900/30 rounded p-3 flex flex-col gap-2">
+          <label className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Flux Tools</label>
+          <StudioToggle label="Ultra Detail" yMap={yPrompt} stateKey="ultra_detail" />
+          <StudioToggle label="Pro Refiner" yMap={yPrompt} stateKey="pro_refiner" />
+        </div>
+      )}
+
+      {model === 'sdxl' && (
+        <div className="bg-orange-900/10 border border-orange-900/30 rounded p-3 flex flex-col gap-2">
+          <label className="text-[9px] font-bold text-orange-400 uppercase tracking-widest">SDXL Optimizers</label>
+          <StudioToggle label="Fast Mode" yMap={yPrompt} stateKey="fast_mode" />
+          <StudioToggle label="High VRAM" yMap={yPrompt} stateKey="high_vram" />
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Prompt</label>
         <textarea 
           value={prompt}
           onChange={(e) => { setPrompt(e.target.value); yPrompt?.set('currentPrompt', e.target.value); }}
           placeholder="Art style, details, mood..."
-          className="w-full h-24 bg-black/40 border border-studio-border rounded p-2 text-xs focus:outline-none focus:border-studio-accent resize-none"
+          className="w-full h-24 bg-black/40 border border-studio-border rounded p-2 text-xs focus:outline-none focus:border-studio-accent resize-none placeholder:italic placeholder:opacity-30"
         />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1">
           <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Seed</label>
@@ -51,13 +102,11 @@ export const ArtControls: React.FC = () => {
             className="w-full bg-black/40 border border-studio-border rounded px-2 py-1 text-xs focus:outline-none focus:border-studio-accent"
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Steps</label>
-          <input type="range" min="10" max="50" value={steps} onChange={(e) => setSteps(parseInt(e.target.value))} className="w-full accent-studio-accent" />
-        </div>
+        <StudioSlider label="Steps" yMap={yPrompt} stateKey="steps" min={10} max={50} className="flex-1" />
       </div>
+
       <button 
-        onClick={isGenerating ? cancel : () => generate(prompt, seed, steps, numVariations)}
+        onClick={isGenerating ? cancel : () => generate(prompt, seed, yPrompt?.get('steps') || 20, numVariations)}
         disabled={!prompt.trim() && !isGenerating}
         className={`py-2 rounded font-bold text-xs transition-all ${isGenerating ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-studio-accent text-white hover:bg-studio-accent/80'}`}
       >

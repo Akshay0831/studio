@@ -44,6 +44,18 @@ class WebSocketManager:
             logger.error(f"WS Execution error: {e}")
             await websocket.send_json({"type": "error", "message": str(e)})
 
+    async def broadcast_json(self, message: Dict[str, Any]):
+        """Broadcasts a JSON message to all connected clients efficiently."""
+        if not self.active_connections:
+            return
+            
+        payload = json.dumps(message)
+        for connection in self.active_connections:
+            try:
+                await connection.send_text(payload)
+            except Exception:
+                pass
+
 manager = WebSocketManager()
 
 def load_extensions():

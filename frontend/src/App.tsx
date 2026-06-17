@@ -1,28 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Activity, Settings, Github, Wifi, WifiOff } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import ChatPanel from './components/ChatPanel'
 import { useStudioStore } from './core/useStudioStore'
 import { EXTENSION_REGISTRY } from './features/registry'
+import { StudioErrorBoundary } from './features/common/components/StudioErrorBoundary'
 
 function App() {
-  const { connected, users } = useStudioStore()
-  const [metrics, setMetrics] = useState<any>(null)
+  const { connected, users, metrics } = useStudioStore()
+  const [activeExtId, setActiveExtId] = useState(EXTENSION_REGISTRY[0].id)
 
-  useEffect(() => {
-    const checkHealth = async () => {
-      try {
-        const res = await fetch('/api/health')
-        if (res.ok) setMetrics(await res.json())
-      } catch (e) {}
-    }
-    const id = setInterval(checkHealth, 10000)
-    checkHealth()
-    return () => clearInterval(id)
-  }, [])
-
+  const activeExt = EXTENSION_REGISTRY.find(e => e.id === activeExtId) || EXTENSION_REGISTRY[0]
   const vram = metrics?.vram
-  const gpu = metrics?.gpu_type || 'GPU'
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-studio-bg text-studio-text">
@@ -31,10 +20,26 @@ function App() {
       }} />
       
       <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {EXTENSION_REGISTRY.map(ext => <ext.primaryView key={ext.id} />)}
+        {/* Extension Switcher Sidebar */}
+        <div className="w-12 bg-black/40 border-r border-studio-border flex flex-col items-center py-4 gap-4">
+          {EXTENSION_REGISTRY.map(ext => (
+            <button 
+              key={ext.id}
+              onClick={() => setActiveExtId(ext.id)}
+              className={`p-2 rounded-lg transition-all ${activeExtId === ext.id ? 'bg-studio-accent text-white shadow-lg' : 'text-studio-text-dim hover:text-white hover:bg-white/5'}`}
+              title={ext.name}
+            >
+              <ext.icon size={20} />
+            </button>
+          ))}
         </div>
-        <ChatPanel />
+
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <StudioErrorBoundary key={activeExt.id}>
+            <activeExt.primaryView />
+          </StudioErrorBoundary>
+        </div>
+        <ChatPanel activeExtension={activeExt} />
       </div>
       
       <div className={`h-6 ${connected ? 'bg-studio-accent' : 'bg-red-700'} text-white flex items-center px-3 justify-between text-[10px] font-bold`}>
@@ -50,7 +55,13 @@ function App() {
           <div className="flex items-center gap-1">
             <Settings size={10} />
             <span>
-              {vram ? `${gpu.toUpperCase()} (${Math.round(vram.allocated_mb / 102.4) / 10}GB / ${Math.round(vram.total_mb / 102.4) / 10}GB)` : 'CPU'}
+              {vram ? (
+                vram.device_type === 'cuda' 
+                  ? `${vram.device_type.toUpperCase()}: ${vram.free_mb}MB FREE`
+                  : vram.device_type === 'mps'
+                    ? `MPS: ${vram.free_mb}MB ESTIMATED`
+                    : 'CPU MODE'
+              ) : 'INITIALIZING...'}
             </span>
           </div>
           <div className="flex items-center gap-2 border-l border-white/20 pl-4">
