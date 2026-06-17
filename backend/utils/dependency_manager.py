@@ -1,6 +1,6 @@
 import logging
 import importlib
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 
 logger = logging.getLogger("studio.backend.utils.dependency_manager")
 

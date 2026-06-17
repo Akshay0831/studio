@@ -1,6 +1,8 @@
-import { MessageSquare, Terminal, History, RotateCcw } from 'lucide-react';
+import { Terminal, History, RotateCcw, FlaskConical, Check, X } from 'lucide-react';
+import * as Y from 'yjs';
 import { ExtensionManifest } from '../features/registry';
 import { useStudioStore } from '../core/useStudioStore';
+import { useWorktree } from '../core/useWorktree';
 
 interface ChatPanelProps {
   activeExtension: ExtensionManifest;
@@ -8,7 +10,10 @@ interface ChatPanelProps {
 
 const ChatPanel: React.FC<ChatPanelProps> = ({ activeExtension }) => {
   const { yHistory, users, connected } = useStudioStore();
+  const { proposals, activeProposalId, startReview, commitProposal, discardProposal } = useWorktree();
   const history = yHistory?.toArray() || [];
+
+  const proposalList = proposals ? Array.from((proposals as Y.Map<any>).entries()).map(([id, data]: [string, any]) => ({ id, ...data })) : [];
 
   return (
     <div className="w-64 bg-studio-panel border-l border-studio-border flex flex-col overflow-hidden shadow-2xl z-10">
@@ -32,6 +37,55 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ activeExtension }) => {
 
       <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-8 custom-scrollbar bg-[#1a1a1a]/50">
         <activeExtension.sidebarControls />
+
+        {proposalList.length > 0 && (
+          <div className="flex flex-col gap-3 pt-6 border-t border-studio-border/30">
+            <div className="flex items-center gap-2 text-studio-accent-orange">
+              <FlaskConical size={12} />
+              <span className="text-[10px] font-bold uppercase tracking-widest">Active Proposals</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {proposalList.map((proposal) => (
+                <div 
+                  key={proposal.id} 
+                  className={`bg-black/40 border rounded p-2 flex flex-col gap-2 transition-all ${activeProposalId === proposal.id ? 'border-studio-accent-orange ring-1 ring-studio-accent-orange/30 shadow-lg' : 'border-studio-border/50 hover:border-studio-accent-orange/50'}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-[9px] font-bold text-studio-accent-orange uppercase">{proposal.type}</span>
+                    <span className="text-[8px] text-studio-text-dim">{new Date(proposal.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  {proposal.data && <img src={`data:image/png;base64,${proposal.data}`} className="w-full h-12 object-cover rounded border border-white/5" alt="" />}
+                  
+                  <div className="flex gap-1 mt-1">
+                    <button 
+                      onClick={() => commitProposal(proposal.id)}
+                      className="flex-1 bg-green-900/40 hover:bg-green-800/60 text-green-200 border border-green-800/50 py-1 rounded flex items-center justify-center gap-1 transition-colors"
+                      title="Accept & Commit"
+                    >
+                      <Check size={10} />
+                      <span className="text-[8px] font-bold">ACCEPT</span>
+                    </button>
+                    <button 
+                      onClick={() => discardProposal(proposal.id)}
+                      className="flex-1 bg-red-900/40 hover:bg-red-800/60 text-red-200 border border-red-800/50 py-1 rounded flex items-center justify-center gap-1 transition-colors"
+                      title="Reject & Discard"
+                    >
+                      <X size={10} />
+                      <span className="text-[8px] font-bold">REJECT</span>
+                    </button>
+                    <button 
+                      onClick={() => startReview(proposal.id)}
+                      className="bg-studio-accent-orange/40 hover:bg-studio-accent-orange/60 text-white border border-studio-accent-orange/50 px-2 py-1 rounded flex items-center justify-center transition-colors"
+                      title="Review on Canvas"
+                    >
+                      <History size={10} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         
         <div className="flex flex-col gap-3 mt-auto pt-8 border-t border-studio-border/30">
           <div className="flex items-center gap-2 text-studio-text-dim">

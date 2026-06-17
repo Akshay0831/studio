@@ -20,6 +20,27 @@ EXTENSION_REGISTRY.forEach(ext => {
 const yCollaboration = yDoc.getMap('collaboration');
 const yPrompt = yDoc.getMap('prompt');
 const yHistory = yDoc.getArray('history');
+const yExperimental = yDoc.getMap('experimental');
+const yReviewMode = yDoc.getMap('review_mode');
+const yProjectConfig = yDoc.getMap('project_config');
+
+// Initialize experimental proposals
+if (yExperimental.size === 0) {
+  yExperimental.set('proposals', new Y.Map());
+  yExperimental.set('activeProposalId', null);
+}
+
+if (yReviewMode.size === 0) {
+  yReviewMode.set('active', false);
+}
+
+// Initialize project configuration
+if (yProjectConfig.size === 0) {
+  yProjectConfig.set('stylePreset', 'fantasy');
+  yProjectConfig.set('autoSyncAudio', true);
+  yProjectConfig.set('sceneMetadata', new Y.Map());
+}
+
 
 // Limit history size to prevent memory bloat
 const MAX_HISTORY = 50;
@@ -31,7 +52,7 @@ yHistory.observe(() => {
 
 let provider: WebsocketProvider | null = null;
 let apiSocket: WebSocket | null = null;
-let listeners: Set<() => void> = new Set();
+const listeners: Set<() => void> = new Set();
 let lastMessage: any = null;
 let metrics: any = null;
 let users: Record<number, any> = {};
@@ -66,7 +87,9 @@ const startConnection = () => {
           lastMessage = msg;
         }
         notify(); 
-      } catch {} 
+      } catch (err) {
+        // Silently ignore non-JSON messages
+      } 
     };
     apiSocket.onclose = () => { 
       isConnected = false; 
@@ -94,6 +117,9 @@ export const useStudioStore = () => {
     yPrompt,
     yHistory,
     yCollaboration,
+    yExperimental,
+    yReviewMode,
+    yProjectConfig,
     connected: isConnected,
     users,
     lastMessage,

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useStudioStore } from '../core/useStudioStore';
 
 export const useAudioComposition = () => {
-  const { sendMessage, lastMessage, yAudio } = useStudioStore();
+  const { sendMessage, lastMessage, yAudio, yExperimental } = useStudioStore();
   const [isComposing, setIsComposing] = useState(false);
   const [composingLayerIndex, setComposingLayerIndex] = useState<number | null>(null);
   const [compositionProgress, setCompositionProgress] = useState(0);
@@ -12,25 +12,44 @@ export const useAudioComposition = () => {
     if (!lastMessage) return;
 
     if (lastMessage.type === 'audio_chunk') {
-      const { data } = lastMessage;
-      if (data && data.progress !== undefined) {
-        setCompositionProgress(data.progress);
+      const { metadata } = lastMessage;
+      if (metadata && metadata.progress !== undefined) {
+        setCompositionProgress(metadata.progress);
       }
     } else if (lastMessage.type === 'composition_complete') {
       setIsComposing(false);
       setComposingLayerIndex(null);
       setCompositionProgress(100);
       
-      if (lastMessage.result && lastMessage.result.output_url) {
-        setLastOutputUrl(lastMessage.result.output_url);
+      const worktree = lastMessage.worktree || 'main';
+      const resultUrl = lastMessage.result?.output_url;
+
+      if (worktree === 'experimental' && yExperimental && resultUrl) {
+        const proposalId = `audio-${Date.now()}`;
+        const proposals = yExperimental.get('proposals') as any;
+        
+        // Find layer name for the index
+        const layers = yAudio?.get('layers') as any[] || [];
+        const layerName = layers[lastMessage.layer_index]?.name || `Layer ${lastMessage.layer_index}`;
+
+        proposals.set(proposalId, {
+          type: 'audio_layer',
+          data: resultUrl,
+          layerName: layerName,
+          confidence: 1.0,
+          timestamp: Date.now(),
+          source: 'composer'
+        });
+      } else if (resultUrl) {
+        setLastOutputUrl(resultUrl);
       }
     } else if (lastMessage.type === 'error') {
       setIsComposing(false);
       setComposingLayerIndex(null);
     }
-  }, [lastMessage]);
+  }, [lastMessage, yExperimental, yAudio]);
 
-  const compose = useCallback((layerIndex: number, seed: number, config: any) => {
+  const compose = useCallback((layerIndex: number, seed: number, config: any, worktree: string = 'main') => {
     setIsComposing(true);
     setComposingLayerIndex(layerIndex);
     setCompositionProgress(0);
@@ -50,7 +69,8 @@ export const useAudioComposition = () => {
       type: 'regenerate_audio',
       layer_index: layerIndex,
       seed: seed,
-      config: { ...config, notes }
+      config: { ...config, notes },
+      worktree: worktree // Pass target worktree context
     });
   }, [sendMessage, yAudio]);
 

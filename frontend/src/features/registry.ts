@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Music, Layers } from 'lucide-react';
+import { Image, Music } from 'lucide-react';
 import ImageEditor from './art/ImageEditor';
 import { ArtControls } from './art/ArtControls';
 import AudioMixer from './audio/AudioMixer';

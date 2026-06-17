@@ -1,24 +1,32 @@
 import React, { useEffect, useCallback, useState } from 'react';
 import * as Tone from 'tone';
 import { 
-  Music, 
-  Volume2, 
   Settings2, 
   Play, 
   Pause, 
-  Square,
-  ChevronRight,
-  RefreshCw
+  Square, 
+  ChevronRight, 
+  RefreshCw 
 } from 'lucide-react';
+
 import { useStudioStore } from '../../core/useStudioStore';
 import { useAudioComposition } from '../../hooks/useAudioComposition';
 import { useAudioPlayback } from '../../hooks/useAudioPlayback';
+import { useWorktree } from '../../core/useWorktree';
 import PianoRoll from './PianoRoll';
 
 const AudioMixer: React.FC = () => {
   const { yAudio, yHistory } = useStudioStore();
   const { isComposing, composingLayerIndex, compositionProgress, lastOutputUrl, compose } = useAudioComposition();
   const { togglePlay: togglePlayReal, stop: stopReal, loadResult } = useAudioPlayback();
+  const { isReviewMode, activeProposalId, proposals } = useWorktree();
+
+  const [layers, setLayers] = useState([
+    { name: 'Bass', volume: 0, pan: 0, active: true, progress: 0 },
+    { name: 'Lead', volume: 0, pan: 0, active: true, progress: 0 },
+    { name: 'Drums', volume: 0, pan: 0, active: true, progress: 0 },
+    { name: 'Ambient', volume: 0, pan: 0, active: false, progress: 0 },
+  ]);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [bpm, setBpm] = useState(120);
@@ -37,14 +45,17 @@ const AudioMixer: React.FC = () => {
         }]);
       }
     } 
-  }, [lastOutputUrl, loadResult, yHistory, composingLayerIndex]);
+  }, [lastOutputUrl, loadResult, yHistory, composingLayerIndex, layers]);
 
-  const [layers, setLayers] = useState([
-    { name: 'Bass', volume: 0, pan: 0, active: true, progress: 0 },
-    { name: 'Lead', volume: 0, pan: 0, active: true, progress: 0 },
-    { name: 'Drums', volume: 0, pan: 0, active: true, progress: 0 },
-    { name: 'Ambient', volume: 0, pan: 0, active: false, progress: 0 },
-  ]);
+  // Load audio data from active proposal in review mode
+  useEffect(() => {
+    if (isReviewMode && activeProposalId) {
+      const proposal = (proposals as any)?.get(activeProposalId);
+      if (proposal?.type === 'audio_layer' && proposal.data) {
+        loadResult(proposal.data);
+      }
+    }
+  }, [isReviewMode, activeProposalId, proposals, loadResult]);
 
   const [composer, setComposer] = useState('standard');
   const [key, setKey] = useState('C');

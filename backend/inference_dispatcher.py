@@ -1,7 +1,7 @@
 import torch
 import os
 import logging
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Callable, List
 from studio.backend.config import settings
 from studio.backend.utils.gpu import get_vram_info
 

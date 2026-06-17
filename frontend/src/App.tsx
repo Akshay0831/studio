@@ -3,11 +3,13 @@ import { Activity, Settings, Github, Wifi, WifiOff } from 'lucide-react'
 import { Toaster } from 'react-hot-toast'
 import ChatPanel from './components/ChatPanel'
 import { useStudioStore } from './core/useStudioStore'
+import { useWorktree } from './core/useWorktree'
 import { EXTENSION_REGISTRY } from './features/registry'
 import { StudioErrorBoundary } from './features/common/components/StudioErrorBoundary'
 
 function App() {
   const { connected, users, metrics } = useStudioStore()
+  const { isReviewMode, discardProposal, activeProposalId } = useWorktree()
   const [activeExtId, setActiveExtId] = useState(EXTENSION_REGISTRY[0].id)
 
   const activeExt = EXTENSION_REGISTRY.find(e => e.id === activeExtId) || EXTENSION_REGISTRY[0]
@@ -34,7 +36,23 @@ function App() {
           ))}
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          {isReviewMode && (
+            <div className="absolute top-0 left-0 right-0 z-50 bg-studio-accent-orange text-white px-4 py-1 flex items-center justify-between shadow-md animate-in slide-in-from-top duration-300">
+              <div className="flex items-center gap-2 text-[10px] font-bold">
+                <Activity size={12} className="animate-pulse" />
+                <span>Reviewing: {String(activeProposalId)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => discardProposal(String(activeProposalId)!)}
+                  className="bg-white/10 hover:bg-white/20 px-2 py-0.5 rounded text-[10px] transition-colors"
+                >
+                  CANCEL REVIEW
+                </button>
+              </div>
+            </div>
+          )}
           <StudioErrorBoundary key={activeExt.id}>
             <activeExt.primaryView />
           </StudioErrorBoundary>

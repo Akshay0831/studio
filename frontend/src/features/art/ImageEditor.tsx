@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Canvas, PencilBrush, FabricImage } from 'fabric';
-import { MousePointer2, Eraser, Brush, Square, Download, Undo2, Redo2, Layers, Eye, EyeOff } from 'lucide-react';
+import { MousePointer2, Eraser, Brush, Square, Download, Undo2, Redo2, Layers, Eye, EyeOff, Activity } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useStudioStore } from '../../core/useStudioStore';
+import { useWorktree } from '../../core/useWorktree';
 import { useImageEditor } from '../../hooks/useImageEditor';
 
 const ImageEditor: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { yImage } = useStudioStore();
+  const { yImage, yExperimental } = useStudioStore();
+  const { isReviewMode, activeProposalId, proposals } = useWorktree();
   const { fabricRef, activeTool, setActiveTool, syncCanvasToYjs, undo, redo } = useImageEditor(yImage);
   const [showLayers, setShowLayers] = useState(true);
   const [layers, setLayers] = useState<any[]>([]);
@@ -18,18 +20,34 @@ const ImageEditor: React.FC = () => {
     fabricRef.current = canvas;
     
     const update = () => {
-      const data = yImage.get('canvasData');
-      if (data && data !== JSON.stringify(canvas.toJSON())) {
-        canvas.loadFromJSON(JSON.parse(data)).then(() => {
+      // Check for active proposal in review mode
+      let activeImageData = yImage.get('baseImageData');
+      let isProposalPreview = false;
+
+      if (isReviewMode && activeProposalId) {
+        const proposal = (proposals as any)?.get(activeProposalId);
+        if (proposal && (proposal.type === 'image_generate' || proposal.type === 'image_inpaint')) {
+          activeImageData = proposal.data;
+          isProposalPreview = true;
+        }
+      }
+
+      const canvasData = yImage.get('canvasData');
+      if (canvasData && canvasData !== JSON.stringify(canvas.toJSON())) {
+        canvas.loadFromJSON(JSON.parse(canvasData)).then(() => {
           canvas.renderAll();
           updateLayersList(canvas);
         });
       }
-      const img = yImage.get('baseImageData');
-      if (img) {
-        FabricImage.fromURL(`data:image/png;base64,${img}`).then(loaded => {
+
+      if (activeImageData) {
+        FabricImage.fromURL(`data:image/png;base64,${activeImageData}`).then(loaded => {
           canvas.getObjects('image').forEach(o => canvas.remove(o));
-          loaded.set({ selectable: false, evented: false });
+          loaded.set({ 
+            selectable: false, 
+            evented: false,
+            opacity: isProposalPreview ? 0.9 : 1.0
+          });
           canvas.add(loaded);
           canvas.sendObjectToBack(loaded);
           canvas.renderAll();
@@ -43,13 +61,21 @@ const ImageEditor: React.FC = () => {
     };
 
     yImage.observe(update);
+    if (yExperimental) yExperimental.observe(update);
+    
     canvas.on('object:added', () => { syncCanvasToYjs(); updateLayersList(canvas); });
     canvas.on('object:modified', syncCanvasToYjs);
     canvas.on('object:removed', () => { syncCanvasToYjs(); updateLayersList(canvas); });
     canvas.on('path:created', syncCanvasToYjs);
     
-    return () => { yImage.unobserve(update); canvas.dispose(); };
-  }, [yImage, syncCanvasToYjs, fabricRef]);
+    update(); // Initial run
+
+    return () => { 
+      yImage.unobserve(update); 
+      if (yExperimental) yExperimental.unobserve(update);
+      canvas.dispose(); 
+    };
+  }, [yImage, yExperimental, isReviewMode, activeProposalId, proposals, syncCanvasToYjs, fabricRef]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
@@ -137,7 +163,15 @@ const ImageEditor: React.FC = () => {
         <div className="flex-1 flex items-center justify-center p-8 overflow-auto custom-scrollbar">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-studio-accent to-blue-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-            <canvas ref={canvasRef} className="relative border border-studio-border shadow-2xl bg-black" />
+            <div className="relative">
+              <canvas ref={canvasRef} className="border border-studio-border shadow-2xl bg-black" />
+              {isReviewMode && (
+                <div className="absolute top-2 left-2 bg-studio-accent-orange text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg animate-pulse z-20 flex items-center gap-1">
+                  <Activity size={10} />
+                  <span>REVIEWING PROPOSAL</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

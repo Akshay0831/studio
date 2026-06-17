@@ -1,17 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Music, Sliders, Activity, Zap } from 'lucide-react';
+import React, { useState } from 'react';
+import { Music, Globe, FlaskConical, RefreshCw, Sparkles } from 'lucide-react';
 import { useStudioStore } from '../../core/useStudioStore';
-
 import { StudioSelect, StudioToggle } from '../common/components/Controls';
 import { useAudioComposition } from '../../hooks/useAudioComposition';
+import { useProjectConfig } from '../../core/useProjectConfig';
 
 export const AudioControls: React.FC = () => {
   const { yAudio } = useStudioStore();
   const { isComposing, compose } = useAudioComposition();
+  const { autoSyncAudio, sceneMetadata, updateConfig, analyzeScene } = useProjectConfig();
+  const [targetWorktree, setTargetWorktree] = useState<'main' | 'experimental'>('main');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  const handleAnalyze = async () => {
+    setIsAnalyzing(true);
+    analyzeScene();
+    setTimeout(() => setIsAnalyzing(false), 2000); // Visual feedback
+  };
 
   const composers = [
     { id: 'standard', name: 'Standard MIDI', description: 'Rule-based composition' },
-    { id: 'transformer', name: 'AI Transformer', description: 'Neural sequence gen' },
+    { id: 'transformer', name: 'Transformer Engine', description: 'Neural sequence gen' },
     { id: 'ambient', name: 'Ambient Texture', description: 'Generative soundscapes' },
   ];
 
@@ -26,7 +35,7 @@ export const AudioControls: React.FC = () => {
         scale: yAudio?.get('scale') || 'Major', 
         mood: yAudio?.get('mood') || 'Neutral', 
         composer: yAudio?.get('composer') || 'standard' 
-      });
+      }, targetWorktree);
     });
   };
 
@@ -34,6 +43,26 @@ export const AudioControls: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-studio-panel p-4 gap-6 custom-scrollbar overflow-y-auto">
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Target Worktree</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => setTargetWorktree('main')}
+            className={`flex items-center justify-center gap-2 py-2 rounded border transition-all ${targetWorktree === 'main' ? 'bg-studio-accent border-studio-accent text-white shadow-lg' : 'bg-black/20 border-studio-border text-studio-text-dim hover:bg-black/40'}`}
+          >
+            <Globe size={12} />
+            <span className="text-[10px] font-bold">MAIN</span>
+          </button>
+          <button 
+            onClick={() => setTargetWorktree('experimental')}
+            className={`flex items-center justify-center gap-2 py-2 rounded border transition-all ${targetWorktree === 'experimental' ? 'bg-studio-accent-orange border-studio-accent-orange text-white shadow-lg' : 'bg-black/20 border-studio-border text-studio-text-dim hover:bg-black/40'}`}
+          >
+            <FlaskConical size={12} />
+            <span className="text-[10px] font-bold">EXPERIMENT</span>
+          </button>
+        </div>
+      </div>
+
       <StudioSelect 
         label="Composer Engine"
         yMap={yAudio}
@@ -77,16 +106,39 @@ export const AudioControls: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-3">
-        <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">AI Analysis</label>
-        <div className="space-y-2 bg-black/20 p-3 rounded border border-studio-border/30">
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="text-studio-text-dim flex items-center gap-1"><Activity size={10} /> Latency</span>
-            <span className="text-green-400 font-mono">14ms</span>
-          </div>
-          <div className="flex items-center justify-between text-[10px]">
-            <span className="text-studio-text-dim flex items-center gap-1"><Zap size={10} /> GPU Usage</span>
-            <span className="text-orange-400 font-mono">1.2GB</span>
-          </div>
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Sync State</label>
+          <button 
+            onClick={() => updateConfig('autoSyncAudio', !autoSyncAudio)}
+            className={`px-2 py-0.5 rounded text-[9px] font-bold border transition-all ${autoSyncAudio ? 'bg-studio-accent border-studio-accent text-white' : 'bg-black/20 border-studio-border text-studio-text-dim'}`}
+          >
+            {autoSyncAudio ? 'SYNC ON' : 'SYNC OFF'}
+          </button>
+        </div>
+        
+        <div className="bg-black/20 p-3 rounded border border-studio-border/30 flex flex-col gap-3">
+          <button 
+            onClick={handleAnalyze}
+            disabled={isAnalyzing}
+            className={`w-full py-1.5 rounded text-[10px] font-bold flex items-center justify-center gap-2 border transition-all ${isAnalyzing ? 'bg-purple-900/20 border-purple-900/50 text-purple-400' : 'bg-purple-900/10 border-purple-900/30 text-purple-400 hover:bg-purple-900/20'}`}
+          >
+            {isAnalyzing ? <RefreshCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            <span>EXTRACT SCENE CONTEXT</span>
+          </button>
+
+          {sceneMetadata && sceneMetadata.mood && (
+            <div className="flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-1 duration-500">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="text-studio-text-dim uppercase tracking-tighter">Detected Mood</span>
+                <span className="text-studio-accent font-bold uppercase">{sceneMetadata.mood}</span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {sceneMetadata.keywords?.map((kw: string) => (
+                  <span key={kw} className="px-1.5 py-0.5 bg-white/5 rounded text-[8px] text-studio-text-dim border border-white/5 uppercase font-mono">{kw}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

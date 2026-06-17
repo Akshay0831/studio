@@ -1,12 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ThumbsUp, Loader2 } from 'lucide-react';
+import { ThumbsUp, Loader2, FlaskConical, Globe, Wand2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useStudioStore } from '../../core/useStudioStore';
 import { useArtGeneration } from '../../hooks/useArtGeneration';
+import { useWorktree } from '../../core/useWorktree';
+import { useProjectConfig } from '../../core/useProjectConfig';
 
 import { StudioSelect, StudioToggle, StudioSlider } from '../common/components/Controls';
+
 export const ArtControls: React.FC = () => {
-  const { yPrompt, yImage, yHistory } = useStudioStore();
+  const { yPrompt, yImage, yHistory, yExperimental, lastMessage } = useStudioStore();
+  const { startReview } = useWorktree();
+  const { stylePreset, updateConfig, refinePrompt } = useProjectConfig();
   const { 
     isGenerating, 
     variations, 
@@ -14,12 +19,27 @@ export const ArtControls: React.FC = () => {
     cancel, 
     numVariations, 
     setNumVariations,
-    model,
-    setModel
+    model
   } = useArtGeneration();
 
   const [prompt, setPrompt] = useState('');
   const [seed, setSeed] = useState(0);
+  const [targetWorktree, setTargetWorktree] = useState<'main' | 'experimental'>('main');
+  const [isRefining, setIsRefining] = useState(false);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'prompt_refined') {
+      setPrompt(lastMessage.refined);
+      yPrompt?.set('currentPrompt', lastMessage.refined);
+      setIsRefining(false);
+      toast.success('Prompt expanded!');
+    }
+  }, [lastMessage, yPrompt]);
+
+  const handleRefine = () => {
+    setIsRefining(true);
+    refinePrompt(prompt);
+  };
 
   useEffect(() => {
     if (!yPrompt) return;
@@ -35,6 +55,21 @@ export const ArtControls: React.FC = () => {
   }, [yPrompt, prompt, seed]);
 
   const promote = (data: string) => {
+    if (targetWorktree === 'experimental') {
+      const proposalId = `art-${Date.now()}`;
+      const proposals = yExperimental.get('proposals') as any;
+      proposals.set(proposalId, {
+        type: 'image_generate',
+        data: data,
+        confidence: 1.0,
+        timestamp: Date.now(),
+        source: 'user_experiment'
+      });
+      toast.success('Added to Experimental Worktree');
+      startReview(proposalId);
+      return;
+    }
+
     if (!yImage) return;
     yImage.set('baseImageData', data);
     // Clear canvas objects when promoting new base image
@@ -51,6 +86,14 @@ export const ArtControls: React.FC = () => {
     }
   };
 
+  const handleGenerate = () => {
+    if (isGenerating) {
+      cancel();
+    } else {
+      generate(prompt, seed, (yPrompt?.get('steps') as number) || 20, numVariations, targetWorktree);
+    }
+  };
+
 
   const models = [
     { id: 'sdxl', name: 'Stable Diffusion XL', description: 'Fast, high quality' },
@@ -59,6 +102,26 @@ export const ArtControls: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-studio-panel p-4 gap-6 custom-scrollbar overflow-y-auto">
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Target Worktree</label>
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => setTargetWorktree('main')}
+            className={`flex items-center justify-center gap-2 py-2 rounded border transition-all ${targetWorktree === 'main' ? 'bg-studio-accent border-studio-accent text-white shadow-lg' : 'bg-black/20 border-studio-border text-studio-text-dim hover:bg-black/40'}`}
+          >
+            <Globe size={12} />
+            <span className="text-[10px] font-bold">MAIN</span>
+          </button>
+          <button 
+            onClick={() => setTargetWorktree('experimental')}
+            className={`flex items-center justify-center gap-2 py-2 rounded border transition-all ${targetWorktree === 'experimental' ? 'bg-studio-accent-orange border-studio-accent-orange text-white shadow-lg' : 'bg-black/20 border-studio-border text-studio-text-dim hover:bg-black/40'}`}
+          >
+            <FlaskConical size={12} />
+            <span className="text-[10px] font-bold">EXPERIMENT</span>
+          </button>
+        </div>
+      </div>
+
       <StudioSelect 
         label="Active Model"
         yMap={yPrompt}
@@ -83,13 +146,39 @@ export const ArtControls: React.FC = () => {
       )}
 
       <div className="flex flex-col gap-2">
-        <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Prompt</label>
+        <div className="flex items-center justify-between">
+          <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Prompt</label>
+          <button 
+            onClick={handleRefine}
+            disabled={!prompt.trim() || isRefining}
+            className={`flex items-center gap-1.5 px-2 py-1 rounded text-[9px] font-bold transition-all ${isRefining ? 'bg-studio-accent/20 text-studio-accent animate-pulse' : 'bg-studio-accent/10 text-studio-accent hover:bg-studio-accent hover:text-white'}`}
+            title="Enhance prompt details"
+          >
+            {isRefining ? <Loader2 size={10} className="animate-spin" /> : <Wand2 size={10} />}
+            <span>ENHANCE</span>
+          </button>
+        </div>
         <textarea 
           value={prompt}
           onChange={(e) => { setPrompt(e.target.value); yPrompt?.set('currentPrompt', e.target.value); }}
           placeholder="Art style, details, mood..."
           className="w-full h-24 bg-black/40 border border-studio-border rounded p-2 text-xs focus:outline-none focus:border-studio-accent resize-none placeholder:italic placeholder:opacity-30"
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Style Preset</label>
+        <div className="grid grid-cols-2 gap-2">
+          {['fantasy', 'cyberpunk', 'retro', 'dark_souls'].map(preset => (
+            <button 
+              key={preset}
+              onClick={() => updateConfig('stylePreset', preset)}
+              className={`py-1.5 rounded text-[9px] font-bold border transition-all uppercase tracking-tighter ${stylePreset === preset ? 'bg-studio-accent border-studio-accent text-white shadow-lg shadow-studio-accent/20' : 'bg-black/20 border-studio-border text-studio-text-dim hover:bg-black/40'}`}
+            >
+              {preset.replace('_', ' ')}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -106,12 +195,13 @@ export const ArtControls: React.FC = () => {
       </div>
 
       <button 
-        onClick={isGenerating ? cancel : () => generate(prompt, seed, yPrompt?.get('steps') || 20, numVariations)}
+        onClick={handleGenerate}
         disabled={!prompt.trim() && !isGenerating}
         className={`py-2 rounded font-bold text-xs transition-all ${isGenerating ? 'bg-red-900/50 text-red-200 border border-red-800' : 'bg-studio-accent text-white hover:bg-studio-accent/80'}`}
       >
         {isGenerating ? 'STOP' : 'GENERATE'}
       </button>
+      
       <div className="flex flex-col gap-2 flex-1 overflow-hidden">
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-bold text-studio-text-dim uppercase tracking-wider">Variations</label>

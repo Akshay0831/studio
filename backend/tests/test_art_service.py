@@ -15,6 +15,8 @@ class ModelType(Enum):
     SD15 = "sd15"
 
 mock_artsynthesis.config.ModelType = ModelType
+mock_artsynthesis.utils.DeviceUtils.GetDevice.return_value = "cpu"
+mock_artsynthesis.config.QuantizationType.NONE = "none"
 sys.modules['artsynthesis'] = mock_artsynthesis
 sys.modules['artsynthesis.modules'] = mock_artsynthesis.modules
 sys.modules['artsynthesis.utils'] = mock_artsynthesis.utils
@@ -32,19 +34,19 @@ async def test_generate_local(mock_art_service):
     mock_pipeline = MagicMock()
     mock_pipeline.return_value = MagicMock(images=[MagicMock()])
     mock_art_service.model_manager.GetPipeline.return_value = mock_pipeline
-    mock_art_service._pil_to_b64 = MagicMock(return_value="mock_b64")
     
-    # We need a real-ish ModelType for the enum
-    from artsynthesis.config import ModelType
-    
-    result = await mock_art_service._generate_local(
-        prompt="A cute cat",
-        seed=42,
-        config={"steps": 20},
-        model_type=ModelType.SDXL,
-        stream_callback=None
-    )
-    
-    assert result["image_b64"] == "mock_b64"
-    assert result["seed"] == 42
-    assert result["backend"] == "local_gpu"
+    with patch('studio.backend.art_service.pil_to_base64', return_value="mock_b64"):
+        # We need a real-ish ModelType for the enum
+        from artsynthesis.config import ModelType
+        
+        result = await mock_art_service._generate_local(
+            prompt="A cute cat",
+            seed=42,
+            gen_config={"steps": 20},
+            model_type=ModelType.SDXL,
+            stream_callback=None
+        )
+        
+        assert result["image_base64"] == "mock_b64"
+        assert result["seed"] == 42
+        assert result["backend"] == "local_gpu"

@@ -1,4 +1,5 @@
 from fastapi import FastAPI, WebSocket
+from fastapi.staticfiles import StaticFiles
 from studio.backend.config import settings
 from studio.backend.routes import art, audio
 from studio.backend.inference_dispatcher import dispatcher
@@ -12,7 +13,7 @@ import asyncio
 
 app = FastAPI(
     title="Unified Editing Studio API",
-    description="Interactive backend for real-time AI sprite and music generation",
+    description="Interactive backend for real-time sprite and music generation",
     version="1.0.0"
 )
 

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useStudioStore } from '../core/useStudioStore';
 
 export const useArtGeneration = () => {
@@ -10,7 +10,7 @@ export const useArtGeneration = () => {
 
   const [progress, setProgress] = useState(0);
 
-  const generate = useCallback((prompt: string, seed: number, steps: number, count: number) => {
+  const generate = useCallback((prompt: string, seed: number, steps: number, count: number, worktree: string = 'main') => {
     setIsGenerating(true);
     setProgress(0);
     setVariations(new Array(count).fill(''));
@@ -30,7 +30,8 @@ export const useArtGeneration = () => {
       prompt,
       seed,
       num_variations: count,
-      config
+      config,
+      worktree: worktree // Pass target worktree context
     });
   }, [sendMessage, model, yPrompt]);
 
@@ -61,7 +62,7 @@ export const useArtGeneration = () => {
       setIsGenerating(false);
       setProgress(0);
     }
-  }, [lastMessage]);
+  }, [lastMessage, variations, numVariations]);
 
   const cancel = useCallback(() => {
     sendMessage({ type: 'cancel_operation' });

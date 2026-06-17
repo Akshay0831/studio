@@ -31,9 +31,13 @@ class WebSocketManager:
         try:
             payload = json.loads(raw_message)
             message_type = payload.get("type")
+            # Route message to worktree context (main or experimental)
+            target_worktree = payload.get("worktree", "main")
             
             handler = self.handlers.get(message_type)
             if handler:
+                if "worktree" not in payload:
+                    payload["worktree"] = target_worktree
                 await handler(websocket, payload)
             else:
                 await websocket.send_json({"type": "error", "message": f"Handler not found: {message_type}"})
