@@ -1,29 +1,73 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from starlette.requests import Request
 from studio.backend.config import settings
 from studio.backend.routes import art, audio
 from studio.backend.inference_dispatcher import dispatcher
 from studio.backend.websocket_handler import websocket_endpoint, manager
 from studio.backend.utils.gpu import get_vram_info
 from studio.backend.utils.telemetry import telemetry
+from studio.backend.utils.monitoring import (
+    health_monitor,
+    get_monitoring_data,
+    LoggingMiddleware,
+    REQUESTS_CACHE
+)
+from studio.backend.utils.rate_limiter import rate_limit_middleware
+from studio.backend.utils.error_handling import (
+    custom_exception_handler,
+    validation_exception_handler,
+    pydantic_exception_handler,
+    general_error_middleware
+)
+from studio.backend.utils.rate_limiter import rate_limit_middleware
+from studio.backend.utils.monitoring import LoggingMiddleware, health_monitor
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 import time
 import os
 import asyncio
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("studio/backend/server.log"),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("studio.backend.app")
+
+# Add middleware in order
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(rate_limit_middleware)
+import logging
 
 app = FastAPI(
     title="Unified Editing Studio API",
     description="Interactive backend for real-time sprite and music generation",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
+
+# Add global error handler
+app.add_exception_handler(Exception, custom_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(pydantic_exception_handler, pydantic_exception_handler)
 
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, replace with specific origins
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:8001"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=3600,
 )
 
 # Background task for system status broadcasting
@@ -53,24 +97,75 @@ app.include_router(audio.router, prefix="/api")
 os.makedirs(settings.STUDIO_OUTPUT_PATH, exist_ok=True)
 app.mount("/output", StaticFiles(directory=settings.STUDIO_OUTPUT_PATH), name="output")
 
-@app.websocket("/ws")
-async def websocket_route(websocket: WebSocket):
-    await websocket_endpoint(websocket)
+STUDIO_ROOT = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = STUDIO_ROOT / "frontend" / "dist"
 
 start_time = time.time()
 
 @app.get("/api/health")
 async def health_check():
+    """Health check endpoint with comprehensive system status."""
     from studio.backend.utils.dependency_manager import DependencyManager
-    return {
+
+    health_data = {
         "status": "ok",
         "gpu_available": dispatcher.local_gpu_type is not None,
         "gpu_type": dispatcher.local_gpu_type,
         "vram": get_vram_info(),
         "performance": telemetry.get_summary(),
         "engines": DependencyManager.get_health_report(),
-        "uptime_seconds": time.time() - start_time
+        "uptime_seconds": round(time.time() - start_time, 2),
+        "version": "1.0.0",
+        "monitoring": {
+            "total_requests": health_monitor.request_count,
+            "uptime_seconds": health_monitor.uptime_seconds,
+            "avg_response_time": health_monitor.avg_response_time,
+            "success_rate": health_monitor.success_rate
+        }
     }
+
+    logger.info("Health check requested")
+
+    return health_data
+
+
+@app.get("/api/monitoring")
+async def get_monitoring():
+    """Get detailed monitoring and statistics."""
+    return await get_monitoring_data()
+
+
+@app.get("/api/requests")
+async def get_recent_requests(limit: int = 20):
+    """Get recent request logs (for debugging)."""
+    return {
+        "requests": REQUESTS_CACHE[-limit:] if REQUESTS_CACHE else []
+    }
+
+
+if FRONTEND_DIST.exists():
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="frontend_assets")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_frontend_root():
+        return FileResponse(FRONTEND_DIST / "index.html")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def serve_frontend_spa(request: Request, full_path: str):
+        if full_path.startswith("api/") or full_path.startswith("output/") or full_path == "ws" or "." in full_path:
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(FRONTEND_DIST / "index.html")
+else:
+    @app.get("/")
+    async def frontend_status():
+        return {
+            "status": "ok",
+            "message": "Studio backend is running. Build the frontend with npm run build to serve the UI."
+        }
+
+@app.websocket("/ws")
+async def websocket_route(websocket: WebSocket):
+    await websocket_endpoint(websocket)
 
 if __name__ == "__main__":
     import uvicorn
