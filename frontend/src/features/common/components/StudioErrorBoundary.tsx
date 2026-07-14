@@ -1,5 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { AlertCircle, RefreshCw, XCircle, AlertTriangle, Info } from 'lucide-react';
+import { RefreshCw, XCircle } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -28,14 +28,14 @@ export class StudioErrorBoundary extends Component<Props, State> {
     console.error('Uncaught error in Studio extension:', error, errorInfo);
 
     // In production, you might want to send this to an error tracking service
-    if (process.env.NODE_ENV === 'production') {
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
       // Send error to monitoring service
-      const errorData = {
-        error: error.message,
-        stack: error.stack,
-        componentStack: errorInfo.componentStack,
-        timestamp: new Date().toISOString()
-      };
+      // const errorData = {
+      //   error: error.message,
+      //   stack: error.stack,
+      //   componentStack: errorInfo.componentStack,
+      //   timestamp: new Date().toISOString()
+      // };
 
       // Example: send to monitoring service
       // fetch('/api/error-log', { method: 'POST', body: JSON.stringify(errorData) })
@@ -67,7 +67,7 @@ export class StudioErrorBoundary extends Component<Props, State> {
           </p>
 
           {/* Error details (visible in development) */}
-          {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+          {typeof process !== 'undefined' && process.env.NODE_ENV === 'development' && this.state.errorInfo && (
             <details className="w-full max-w-md mb-6 text-left">
               <summary className="text-xs text-studio-text-dim cursor-pointer hover:text-white mb-2">
                 Technical Details (Development Mode)
@@ -90,7 +90,7 @@ export class StudioErrorBoundary extends Component<Props, State> {
               <span>RELOAD PAGE</span>
             </button>
 
-            {process.env.NODE_ENV === 'development' && this.state.errorInfo && (
+            {typeof process !== 'undefined' && process.env.NODE_ENV === 'development' && this.state.errorInfo && (
               <button
                 onClick={() => this.setState({ hasError: false, error: null, errorInfo: null })}
                 className="flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white rounded-lg font-bold text-sm hover:bg-white/20 transition-all"

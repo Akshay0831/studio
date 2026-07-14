@@ -1,0 +1,29 @@
+{
+  "app": {
+    "title": "Unified Editing Studio",
+    "subtitle": "KI-gestützte Sprite-Kunst und Musikgenerierung",
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Wiederholen"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "imageEditor": "Bild-Editor",
+    "audioMixer": "Audio-Mixer",
+    "chat": "Chat",
+    "settings": "Einstellungen",
+    "help": "Hilfe",
+    "export": "Exportieren",
+    "save": "Speichern",
+    "newProject": "Neues Projekt",
+    "openProject": "Projekt Öffnen"
+  },
+  "common": {
+    "actions": {
+      "add": "Hinzufügen",
+      "remove": "Entfernen",
+      "save": "Speichern",
+      "cancel": "Abbrechen"
+    }
+  }
+}

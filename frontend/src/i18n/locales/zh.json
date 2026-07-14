@@ -1,0 +1,29 @@
+{
+  "app": {
+    "title": "统一编辑工作室",
+    "subtitle": "AI 驱动的精灵艺术和音乐生成",
+    "loading": "加载中...",
+    "error": "发生错误",
+    "retry": "重试"
+  },
+  "navigation": {
+    "home": "首页",
+    "imageEditor": "图像编辑器",
+    "audioMixer": "音频混音器",
+    "chat": "聊天",
+    "settings": "设置",
+    "help": "帮助",
+    "export": "导出",
+    "save": "保存",
+    "newProject": "新项目",
+    "openProject": "打开项目"
+  },
+  "common": {
+    "actions": {
+      "add": "添加",
+      "remove": "删除",
+      "save": "保存",
+      "cancel": "取消"
+    }
+  }
+}

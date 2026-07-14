@@ -2,27 +2,27 @@ from fastapi import FastAPI, WebSocket, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from starlette.requests import Request
-from studio.backend.config import settings
-from studio.backend.routes import art, audio
-from studio.backend.inference_dispatcher import dispatcher
-from studio.backend.websocket_handler import websocket_endpoint, manager
-from studio.backend.utils.gpu import get_vram_info
-from studio.backend.utils.telemetry import telemetry
-from studio.backend.utils.monitoring import (
+from fastapi.exceptions import RequestValidationError
+from config import settings
+from routes import art, audio, enhanced
+from inference_dispatcher import dispatcher
+from websocket_handler import websocket_endpoint, manager
+from utils.gpu import get_vram_info
+from utils.telemetry import telemetry
+from utils.monitoring import (
     health_monitor,
     get_monitoring_data,
     LoggingMiddleware,
     REQUESTS_CACHE
 )
-from studio.backend.utils.rate_limiter import rate_limit_middleware
-from studio.backend.utils.error_handling import (
+from utils.error_handling import (
     custom_exception_handler,
     validation_exception_handler,
     pydantic_exception_handler,
     general_error_middleware
 )
-from studio.backend.utils.rate_limiter import rate_limit_middleware
-from studio.backend.utils.monitoring import LoggingMiddleware, health_monitor
+from utils.rate_limiter import rate_limit_middleware
+from utils.monitoring import LoggingMiddleware, health_monitor
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import time
@@ -35,15 +35,12 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler("studio/backend/server.log"),
+        logging.FileHandler("server.log"),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger("studio.backend.app")
 
-# Add middleware in order
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(rate_limit_middleware)
 import logging
 
 app = FastAPI(
@@ -54,6 +51,9 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json"
 )
+
+# Add middleware in order
+app.add_middleware(LoggingMiddleware)
 
 # Add global error handler
 app.add_exception_handler(Exception, custom_exception_handler)
@@ -92,6 +92,7 @@ async def startup_event():
 
 app.include_router(art.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
+app.include_router(enhanced.router, prefix="/api")
 
 # Ensure output directory exists
 os.makedirs(settings.STUDIO_OUTPUT_PATH, exist_ok=True)
@@ -105,7 +106,7 @@ start_time = time.time()
 @app.get("/api/health")
 async def health_check():
     """Health check endpoint with comprehensive system status."""
-    from studio.backend.utils.dependency_manager import DependencyManager
+    from utils.dependency_manager import DependencyManager
 
     health_data = {
         "status": "ok",

@@ -1,10 +1,10 @@
 import logging
 from typing import Dict, Optional, Any, Callable, List
 
-from studio.backend.config import settings
-from studio.backend.inference_dispatcher import dispatcher
-from studio.backend.utils.telemetry import trace_performance
-from studio.backend.utils.cache import generation_cache
+from config import settings
+from inference_dispatcher import dispatcher
+from utils.telemetry import trace_performance
+from utils.cache import generation_cache
 
 try:
     from audiolayer.engine import CompositionOrchestrator
@@ -24,7 +24,7 @@ except ImportError:
         def ResumeStream(self, *args): return True
         def SubmitFeedback(self, *args): return True
 
-from studio.backend.utils.base_service import BaseStudioService
+from utils.base_service import BaseStudioService
 
 logger = logging.getLogger("studio.backend.audio_service")
 

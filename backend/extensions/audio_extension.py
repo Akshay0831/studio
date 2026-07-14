@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any
 from fastapi import WebSocket
-from studio.backend.audio_service import audio_service
+from audio_service import audio_service
 
 logger = logging.getLogger("studio.backend.extensions.audio")
 

@@ -24,7 +24,7 @@ REQUESTS_CACHE: list[Dict[str, Any]] = []
 def log_request_response(func: Callable) -> Callable:
     """Decorator to log all API requests and responses."""
     @wraps(func)
-    async def wrapper(*args, Any **kwargs):
+    async def wrapper(*args, **kwargs):
         request = kwargs.get('request', args[0] if len(args) > 0 else None)
 
         start_time = time.time()

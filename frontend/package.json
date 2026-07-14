@@ -10,16 +10,22 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "clsx": "^2.1.1",
     "fabric": "^7.4.0",
+    "i18next": "^26.3.6",
+    "i18next-browser-languagedetector": "^8.2.1",
     "lucide-react": "^0.294.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1",
+    "react-i18next": "^17.0.9",
+    "tailwind-merge": "^3.6.0",
     "tone": "^14.7.77",
     "y-websocket": "^1.5.0",
     "yjs": "^13.6.10"
   },
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "@types/react": "^18.2.37",
     "@types/react-dom": "^18.2.15",
     "@typescript-eslint/eslint-plugin": "^6.10.0",

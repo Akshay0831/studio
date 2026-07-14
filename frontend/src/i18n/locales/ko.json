@@ -1,0 +1,29 @@
+{
+  "app": {
+    "title": "통합 편집 스튜디오",
+    "subtitle": "AI 기반 스프라이트 아트 및 음악 생성",
+    "loading": "로딩 중...",
+    "error": "오류가 발생했습니다",
+    "retry": "재시도"
+  },
+  "navigation": {
+    "home": "홈",
+    "imageEditor": "이미지 편집기",
+    "audioMixer": "오디오 믹서",
+    "chat": "채팅",
+    "settings": "설정",
+    "help": "도움말",
+    "export": "내보내기",
+    "save": "저장",
+    "newProject": "새 프로젝트",
+    "openProject": "프로젝트 열기"
+  },
+  "common": {
+    "actions": {
+      "add": "추가",
+      "remove": "삭제",
+      "save": "저장",
+      "cancel": "취소"
+    }
+  }
+}

@@ -3,7 +3,7 @@ import time
 import logging
 from typing import Dict, Any, List, Callable, Optional, Awaitable
 from dataclasses import dataclass, field
-from studio.backend.utils.gpu import get_vram_info
+from utils.gpu import get_vram_info
 
 logger = logging.getLogger("studio.backend.utils.batch_processor")
 

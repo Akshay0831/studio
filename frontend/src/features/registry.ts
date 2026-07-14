@@ -1,6 +1,6 @@
 import React from 'react';
 import { Image, Music } from 'lucide-react';
-import ImageEditor from './art/ImageEditor';
+// import ImageEditor from './art/ImageEditor';  // Temporarily disabled
 import { ArtControls } from './art/ArtControls';
 import AudioMixer from './audio/AudioMixer';
 import { AudioControls } from './audio/AudioControls';
@@ -20,7 +20,8 @@ export const EXTENSION_REGISTRY: ExtensionManifest[] = [
     id: 'art',
     name: 'Art Studio',
     icon: Image,
-    primaryView: ImageEditor,
+    // primaryView: ImageEditor,  // Temporarily disabled
+    primaryView: () => React.createElement('div', { className: 'p-4 text-center' }, 'Image Editor temporarily disabled'),
     sidebarControls: ArtControls,
     stateKey: 'image',
     initialState: {

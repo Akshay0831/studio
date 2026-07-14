@@ -1,9 +1,9 @@
 import logging
 import asyncio
 from typing import Dict, Any, Optional, Callable, List
-from studio.backend.inference_dispatcher import dispatcher
-from studio.backend.utils.cache import generation_cache
-from studio.backend.utils.telemetry import trace_performance
+from inference_dispatcher import dispatcher
+from utils.cache import generation_cache
+from utils.telemetry import trace_performance
 
 class BaseStudioService:
     def __init__(self, service_name: str):

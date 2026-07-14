@@ -4,7 +4,7 @@ import importlib
 import os
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List, Dict, Any, Callable, Awaitable
-from studio.backend.utils.telemetry import trace_performance
+from utils.telemetry import trace_performance
 
 logger = logging.getLogger("studio.backend.websocket_handler")
 

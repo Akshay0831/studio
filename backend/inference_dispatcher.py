@@ -2,11 +2,11 @@ import torch
 import os
 import logging
 from typing import Optional, Any, Dict, Callable, List
-from studio.backend.config import settings
-from studio.backend.utils.gpu import get_vram_info
+from config import settings
+from utils.gpu import get_vram_info
 
-from studio.backend.utils.batch_processor import batch_processor
-from studio.backend.utils.inference_strategies import LocalGPUStrategy, RemoteAPIStrategy, CPUStrategy
+from utils.batch_processor import batch_processor
+from utils.inference_strategies import LocalGPUStrategy, RemoteAPIStrategy, CPUStrategy
 
 logger = logging.getLogger("studio.backend.inference_dispatcher")
 

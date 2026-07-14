@@ -1,0 +1,261 @@
+{
+  "app": {
+    "title": "Unified Editing Studio",
+    "subtitle": "AI-powered sprite art and music generation",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry"
+  },
+  
+  "navigation": {
+    "home": "Home",
+    "imageEditor": "Image Editor",
+    "audioMixer": "Audio Mixer",
+    "chat": "Chat",
+    "settings": "Settings",
+    "help": "Help",
+    "export": "Export",
+    "save": "Save",
+    "newProject": "New Project",
+    "openProject": "Open Project"
+  },
+  
+  "imageEditor": {
+    "title": "Image Editor",
+    "tools": {
+      "brush": "Brush",
+      "eraser": "Eraser",
+      "fill": "Fill",
+      "crop": "Crop",
+      "transform": "Transform",
+      "select": "Select"
+    },
+    "layers": {
+      "title": "Layers",
+      "add": "Add Layer",
+      "delete": "Delete Layer",
+      "duplicate": "Duplicate Layer",
+      "moveUp": "Move Up",
+      "moveDown": "Move Down",
+      "visibility": "Toggle Visibility",
+      "opacity": "Opacity",
+      "merge": "Merge Layers",
+      "select": "Select",
+      "selectMultiple": "Select Multiple",
+      "noLayers": "No Layers",
+      "stroke": "Stroke",
+      "layer": "Layer",
+      "image": "Image"
+    },
+    "generation": {
+      "title": "AI Generation",
+      "prompt": "Prompt",
+      "generate": "Generate",
+      "cancel": "Cancel",
+      "regenerate": "Regenerate",
+      "style": "Style",
+      "quality": "Quality",
+      "size": "Size"
+    },
+    "export": {
+      "title": "Export Image",
+      "format": "Format",
+      "png": "PNG",
+      "jpeg": "JPEG",
+      "gif": "GIF",
+      "svg": "SVG",
+      "webp": "WebP",
+      "quality": "Quality",
+      "scale": "Scale",
+      "background": "Background",
+      "transparent": "Transparent",
+      "white": "White",
+      "black": "Black",
+      "custom": "Custom",
+      "download": "Download",
+      "preview": "Preview"
+    }
+  },
+  
+  "audioMixer": {
+    "title": "Audio Mixer",
+    "tracks": {
+      "add": "Add Track",
+      "delete": "Delete Track",
+      "mute": "Mute",
+      "solo": "Solo",
+      "volume": "Volume",
+      "pan": "Pan",
+      "effects": "Effects"
+    },
+    "generation": {
+      "title": "AI Audio Generation",
+      "style": "Style",
+      "mood": "Mood",
+      "tempo": "Tempo",
+      "key": "Key",
+      "genre": "Genre",
+      "generate": "Generate",
+      "cancel": "Cancel",
+      "regenerate": "Regenerate"
+    },
+    "export": {
+      "title": "Export Audio",
+      "format": "Format",
+      "mp3": "MP3",
+      "wav": "WAV",
+      "flac": "FLAC",
+      "aac": "AAC",
+      "quality": "Quality",
+      "bitrate": "Bitrate",
+      "sampleRate": "Sample Rate",
+      "download": "Download",
+      "preview": "Preview"
+    }
+  },
+  
+  "chat": {
+    "title": "AI Assistant",
+    "placeholder": "Ask me anything about your project...",
+    "send": "Send",
+    "thinking": "Thinking...",
+    "clear": "Clear Chat",
+    "save": "Save Conversation",
+    "copy": "Copy",
+    "export": "Export"
+  },
+  
+  "monitoring": {
+    "title": "System Monitor",
+    "gpu": "GPU",
+    "memory": "Memory",
+    "cpu": "CPU",
+    "temperature": "Temperature",
+    "usage": "Usage",
+    "status": "Status",
+    "healthy": "Healthy",
+    "warning": "Warning",
+    "critical": "Critical"
+  },
+  
+  "settings": {
+    "title": "Settings",
+    "general": "General",
+    "language": "Language",
+    "theme": "Theme",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "autoDetect": "Auto Detect",
+    "performance": "Performance",
+    "gpu": "GPU Settings",
+    "cpu": "CPU Settings",
+    "memory": "Memory Settings",
+    "advanced": "Advanced",
+    "debug": "Debug Mode",
+    "logs": "Logs",
+    "reset": "Reset to Defaults",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  
+  "keyboard": {
+    "shortcuts": "Keyboard Shortcuts",
+    "help": "Help",
+    "undo": "Undo",
+    "redo": "Redo",
+    "save": "Save",
+    "export": "Export",
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fitToScreen": "Fit to Screen"
+  },
+  
+  "messages": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Information",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "loading": "Loading...",
+    "saving": "Saving...",
+    "generating": "Generating...",
+    "exporting": "Exporting...",
+    "uploaded": "Uploaded successfully",
+    "downloaded": "Downloaded successfully"
+  },
+  
+  "errors": {
+    "network": "Network error occurred",
+    "gpu": "GPU not available",
+    "memory": "Memory limit exceeded",
+    "invalidInput": "Invalid input",
+    "permission": "Permission denied",
+    "notFound": "Not found",
+    "serverError": "Server error",
+    "timeout": "Request timed out",
+    "unknown": "Unknown error"
+  },
+  
+  "common": {
+    "actions": {
+      "add": "Add",
+      "remove": "Remove",
+      "edit": "Edit",
+      "delete": "Delete",
+      "save": "Save",
+      "cancel": "Cancel",
+      "ok": "OK",
+      "apply": "Apply",
+      "reset": "Reset",
+      "clear": "Clear",
+      "search": "Search",
+      "filter": "Filter",
+      "sort": "Sort",
+      "export": "Export",
+      "import": "Import",
+      "share": "Share",
+      "copy": "Copy",
+      "paste": "Paste",
+      "undo": "Undo",
+      "redo": "Redo"
+    },
+    
+    "size": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large",
+      "xlarge": "Extra Large"
+    },
+    
+    "quality": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "ultra": "Ultra"
+    },
+    
+    "time": {
+      "second": "Second",
+      "seconds": "Seconds",
+      "minute": "Minute",
+      "minutes": "Minutes",
+      "hour": "Hour",
+      "hours": "Hours",
+      "day": "Day",
+      "days": "Days"
+    },
+    
+    "format": {
+      "date": "MM/DD/YYYY",
+      "time": "HH:MM:SS",
+      "datetime": "MM/DD/YYYY HH:MM:SS"
+    }
+  }
+}

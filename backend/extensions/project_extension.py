@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any
 from fastapi import WebSocket
-from studio.backend.project_service import project_service
+from project_service import project_service
 
 logger = logging.getLogger("studio.backend.extensions.project")
 

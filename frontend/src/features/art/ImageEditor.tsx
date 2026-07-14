@@ -1,23 +1,191 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Canvas, PencilBrush, FabricImage } from 'fabric';
-import { MousePointer2, Eraser, Brush, Square, Download, Undo2, Redo2, Layers, Eye, EyeOff, Activity } from 'lucide-react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { Canvas, PencilBrush, FabricImage, Path } from 'fabric';
+import { MousePointer2, Eraser, Brush, Download, Undo2, Redo2, Layers, Activity, Square } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useStudioStore } from '../../core/useStudioStore';
 import { useWorktree } from '../../core/useWorktree';
 import { useImageEditor } from '../../hooks/useImageEditor';
+import LayerManager from './LayerManager';
+
+interface ToolSettings {
+  brushSize: number;
+  brushColor: string;
+  eraserSize: number;
+  fillColor: string;
+  maskColor: string;
+}
 
 const ImageEditor: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { yImage, yExperimental } = useStudioStore();
   const { isReviewMode, activeProposalId, proposals } = useWorktree();
   const { fabricRef, activeTool, setActiveTool, syncCanvasToYjs, undo, redo } = useImageEditor(yImage);
-  const [showLayers, setShowLayers] = useState(true);
-  const [layers, setLayers] = useState<any[]>([]);
+  
+  const [selectedLayer, setSelectedLayer] = useState<any>(null);
+  const [toolSettings, setToolSettings] = useState<ToolSettings>({
+    brushSize: 5,
+    brushColor: '#ffffff',
+    eraserSize: 20,
+    fillColor: '#333333',
+    maskColor: 'rgba(255, 0, 0, 0.4)'
+  });
 
+  // Initialize canvas with enhanced settings
   useEffect(() => {
     if (!canvasRef.current) return;
-    const canvas = new Canvas(canvasRef.current, { width: 512, height: 512, backgroundColor: '#000' });
+    
+    const canvas = new Canvas(canvasRef.current, { 
+      width: 512, 
+      height: 512, 
+      backgroundColor: '#000',
+      preserveObjectStacking: true,
+      selection: true,
+      defaultCursor: 'crosshair',
+      hoverCursor: 'crosshair'
+    });
+    
     fabricRef.current = canvas;
+    
+    // Set up custom brush for smoother drawing
+    canvas.freeDrawingBrush = new PencilBrush(canvas);
+    canvas.freeDrawingBrush.width = toolSettings.brushSize;
+    canvas.freeDrawingBrush.color = toolSettings.brushColor;
+    canvas.isDrawingMode = false;
+    
+    // Enhanced event handling
+    const handleObjectModified = () => {
+      syncCanvasToYjs();
+    };
+    
+    const handleObjectAdded = () => {
+      syncCanvasToYjs();
+    };
+    
+    const handleObjectRemoved = () => {
+      syncCanvasToYjs();
+    };
+    
+    const handleSelectionCreated = (e: any) => {
+      const activeObject = e.target;
+      if (activeObject) {
+        // Find the corresponding layer
+        const objects = canvas.getObjects();
+        const layerIndex = objects.findIndex(obj => obj === activeObject);
+        setSelectedLayer(layerIndex);
+      }
+    };
+    
+    const handleSelectionUpdated = (e: any) => {
+      const activeObject = e.target;
+      if (activeObject) {
+        // Find the corresponding layer
+        const objects = canvas.getObjects();
+        const layerIndex = objects.findIndex(obj => obj === activeObject);
+        setSelectedLayer(layerIndex);
+      }
+    };
+    
+    const handleSelectionCleared = () => {
+      setSelectedLayer(null);
+    };
+    
+    // Add event listeners
+    canvas.on('object:modified', handleObjectModified);
+    canvas.on('object:added', handleObjectAdded);
+    canvas.on('object:removed', handleObjectRemoved);
+    canvas.on('selection:created', handleSelectionCreated);
+    canvas.on('selection:updated', handleSelectionUpdated);
+    canvas.on('selection:cleared', handleSelectionCleared);
+    
+    return () => {
+      canvas.off('object:modified', handleObjectModified);
+      canvas.off('object:added', handleObjectAdded);
+      canvas.off('object:removed', handleObjectRemoved);
+      canvas.off('selection:created', handleSelectionCreated);
+      canvas.off('selection:updated', handleSelectionUpdated);
+      canvas.off('selection:cleared', handleSelectionCleared);
+    };
+  }, [syncCanvasToYjs, fabricRef]);
+
+  // Handle tool changes
+  useEffect(() => {
+    if (!fabricRef.current) return;
+    
+    const canvas = fabricRef.current;
+    
+    switch (activeTool) {
+      case 'brush':
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush = new PencilBrush(canvas);
+        canvas.freeDrawingBrush.width = toolSettings.brushSize;
+        canvas.freeDrawingBrush.color = toolSettings.brushColor;
+        break;
+        
+      case 'eraser':
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush = new PencilBrush(canvas);
+        canvas.freeDrawingBrush.width = toolSettings.eraserSize;
+        canvas.freeDrawingBrush.color = '#000000'; // Eraser uses transparency through clear effect
+        break;
+        
+      case 'mask':
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush = new PencilBrush(canvas);
+        canvas.freeDrawingBrush.width = 30; // Larger brush for masking
+        canvas.freeDrawingBrush.color = toolSettings.maskColor;
+        break;
+        
+      case 'rectangle':
+        canvas.isDrawingMode = false;
+        break;
+        
+      case 'circle':
+        canvas.isDrawingMode = false;
+        break;
+        
+      default:
+        canvas.isDrawingMode = false;
+    }
+  }, [activeTool, toolSettings, fabricRef]);
+
+  // Sync tool settings changes
+  const updateToolSettings = useCallback((newSettings: Partial<ToolSettings>) => {
+    setToolSettings(prev => ({ ...prev, ...newSettings }));
+    
+    if (fabricRef.current) {
+      const canvas = fabricRef.current;
+      
+      // Apply settings to selected layer if available
+      if (selectedLayer !== null && selectedLayer < canvas.getObjects().length) {
+        const selectedObj = canvas.getObjects()[selectedLayer];
+        if (newSettings.brushSize !== undefined && selectedObj.strokeWidth !== undefined) {
+          selectedObj.set({ strokeWidth: newSettings.brushSize });
+        }
+        if (newSettings.brushColor !== undefined) {
+          selectedObj.set({ stroke: newSettings.brushColor });
+        }
+        if (newSettings.fillColor !== undefined) {
+          selectedObj.set({ fill: newSettings.fillColor });
+        }
+        canvas.renderAll();
+      }
+      
+      // Update canvas drawing settings
+      if (canvas.isDrawingMode && activeTool === 'brush' && canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.width = newSettings.brushSize || toolSettings.brushSize;
+        canvas.freeDrawingBrush.color = newSettings.brushColor || toolSettings.brushColor;
+      } else if (canvas.isDrawingMode && activeTool === 'eraser' && canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.width = newSettings.eraserSize || toolSettings.eraserSize;
+        canvas.freeDrawingBrush.color = '#000000'; // Eraser uses transparency through clear effect
+      } else if (canvas.isDrawingMode && activeTool === 'mask' && canvas.freeDrawingBrush) {
+        canvas.freeDrawingBrush.width = 30; // Larger brush for masking
+        canvas.freeDrawingBrush.color = newSettings.maskColor || toolSettings.maskColor;
+      }
+    }
+  }, [fabricRef, activeTool, toolSettings, selectedLayer]);
+
+  const handleCanvasUpdate = useCallback(() => {
+    if (!fabricRef.current) return;
     
     const update = () => {
       // Check for active proposal in review mode
@@ -33,56 +201,67 @@ const ImageEditor: React.FC = () => {
       }
 
       const canvasData = yImage.get('canvasData');
-      if (canvasData && canvasData !== JSON.stringify(canvas.toJSON())) {
-        canvas.loadFromJSON(JSON.parse(canvasData)).then(() => {
-          canvas.renderAll();
-          updateLayersList(canvas);
+      if (canvasData && fabricRef.current && canvasData !== JSON.stringify(fabricRef.current.toJSON())) {
+        fabricRef.current.loadFromJSON(JSON.parse(canvasData)).then(() => {
+          if (fabricRef.current) {
+            fabricRef.current.renderAll();
+          }
         });
       }
 
-      if (activeImageData) {
+      if (activeImageData && fabricRef.current) {
         FabricImage.fromURL(`data:image/png;base64,${activeImageData}`).then(loaded => {
-          canvas.getObjects('image').forEach(o => canvas.remove(o));
-          loaded.set({ 
-            selectable: false, 
-            evented: false,
-            opacity: isProposalPreview ? 0.9 : 1.0
-          });
-          canvas.add(loaded);
-          canvas.sendObjectToBack(loaded);
-          canvas.renderAll();
-          updateLayersList(canvas);
+          if (fabricRef.current) {
+            fabricRef.current.getObjects('image').forEach(o => {
+              if (fabricRef.current) {
+                fabricRef.current.remove(o);
+              }
+            });
+            loaded.set({ 
+              selectable: false, 
+              evented: false,
+              opacity: isProposalPreview ? 0.9 : 1.0
+            });
+            fabricRef.current.add(loaded);
+            fabricRef.current.sendObjectToBack(loaded);
+            fabricRef.current.renderAll();
+          }
         });
       }
     };
 
-    const updateLayersList = (c: Canvas) => {
-      setLayers(c.getObjects().map((o, i) => ({ id: i, type: o.type, visible: o.visible, obj: o })));
-    };
+
 
     yImage.observe(update);
     if (yExperimental) yExperimental.observe(update);
     
-    canvas.on('object:added', () => { syncCanvasToYjs(); updateLayersList(canvas); });
-    canvas.on('object:modified', syncCanvasToYjs);
-    canvas.on('object:removed', () => { syncCanvasToYjs(); updateLayersList(canvas); });
-    canvas.on('path:created', syncCanvasToYjs);
+    if (fabricRef.current) {
+      fabricRef.current.on('object:added', syncCanvasToYjs);
+      fabricRef.current.on('object:modified', syncCanvasToYjs);
+      fabricRef.current.on('object:removed', syncCanvasToYjs);
+      fabricRef.current.on('path:created', syncCanvasToYjs);
+    }
     
     update(); // Initial run
 
     return () => { 
       yImage.unobserve(update); 
       if (yExperimental) yExperimental.unobserve(update);
-      canvas.dispose(); 
+      if (fabricRef.current) {
+        fabricRef.current.dispose();
+      }
     };
   }, [yImage, yExperimental, isReviewMode, activeProposalId, proposals, syncCanvasToYjs, fabricRef]);
 
   useEffect(() => {
     const canvas = fabricRef.current;
     if (!canvas) return;
-    canvas.isDrawingMode = activeTool !== 'select';
-    if (canvas.isDrawingMode) {
+    
+    // Handle drawing mode
+    if (activeTool !== 'select') {
+      canvas.isDrawingMode = true;
       const b = new PencilBrush(canvas);
+      
       if (activeTool === 'brush') {
         b.width = 5;
         b.color = '#fff';
@@ -93,22 +272,16 @@ const ImageEditor: React.FC = () => {
         b.width = 20;
         b.color = '#000';
       }
-      canvas.freeDrawingBrush = b;
-    }
-    canvas.renderAll();
-  }, [activeTool, fabricRef]);
+      
 
-  const toggleLayer = (index: number) => {
-    const canvas = fabricRef.current;
-    if (!canvas) return;
-    const obj = canvas.getObjects()[index];
-    if (obj) {
-      obj.visible = !obj.visible;
-      canvas.renderAll();
-      setLayers(canvas.getObjects().map((o, i) => ({ id: i, type: o.type, visible: o.visible, obj: o })));
-      syncCanvasToYjs();
+      
+      canvas.freeDrawingBrush = b;
+    } else {
+      canvas.isDrawingMode = false;
     }
-  };
+    
+    canvas.renderAll();
+  }, [activeTool, fabricRef, syncCanvasToYjs]);
 
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
@@ -119,94 +292,6 @@ const ImageEditor: React.FC = () => {
 
   return (
     <div className="flex-1 flex flex-col bg-studio-bg overflow-hidden relative">
-      <div className="h-12 border-b border-studio-border flex items-center px-4 bg-studio-panel justify-between shadow-md z-10">
-        <div className="flex items-center gap-1.5 bg-black/40 p-1 rounded-lg border border-studio-border">
-          {tools.map(t => (
-            <button 
-              key={t.id} 
-              onClick={() => setActiveTool(t.id)} 
-              title={t.label}
-              className={`p-2 rounded-md transition-all ${activeTool === t.id ? 'bg-studio-accent text-white shadow-lg' : 'text-studio-text-dim hover:text-white hover:bg-white/5'}`}
-            >
-              <t.icon size={16} />
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-black/40 p-1 rounded-lg border border-studio-border">
-            <button onClick={undo} className="p-2 text-studio-text-dim hover:text-white transition-colors" title="Undo"><Undo2 size={16} /></button>
-            <button onClick={redo} className="p-2 text-studio-text-dim hover:text-white transition-colors" title="Redo"><Redo2 size={16} /></button>
-          </div>
-          <div className="w-px h-6 bg-studio-border/30" />
-          <button 
-            onClick={() => setShowLayers(!showLayers)} 
-            className={`p-2 rounded-md transition-all ${showLayers ? 'bg-studio-accent/20 text-studio-accent' : 'text-studio-text-dim hover:text-white'}`}
-            title="Toggle Layers"
-          >
-            <Layers size={18} />
-          </button>
-          <button 
-            onClick={() => {
-              const url = fabricRef.current?.toDataURL({ format: 'png', multiplier: 1 });
-              if (url) { const a = document.createElement('a'); a.download = `studio_export_${Date.now()}.png`; a.href = url; a.click(); toast.success('Exported successfully'); }
-            }} 
-            className="flex items-center gap-2 px-3 py-1.5 bg-studio-accent text-white rounded-lg font-bold text-[10px] hover:bg-studio-accent/80 transition-all shadow-lg shadow-studio-accent/20"
-          >
-            <Download size={14} />
-            <span>EXPORT PNG</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="flex-1 flex overflow-hidden bg-[#050505]">
-        <div className="flex-1 flex items-center justify-center p-8 overflow-auto custom-scrollbar">
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-studio-accent to-blue-500 rounded-lg blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
-            <div className="relative">
-              <canvas ref={canvasRef} className="border border-studio-border shadow-2xl bg-black" />
-              {isReviewMode && (
-                <div className="absolute top-2 left-2 bg-studio-accent-orange text-white text-[8px] font-black px-2 py-0.5 rounded shadow-lg animate-pulse z-20 flex items-center gap-1">
-                  <Activity size={10} />
-                  <span>REVIEWING PROPOSAL</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {showLayers && (
-          <div className="w-64 border-l border-studio-border bg-studio-panel flex flex-col shadow-2xl">
-            <div className="h-10 border-b border-studio-border flex items-center px-4 bg-black/20">
-              <span className="text-[10px] font-black uppercase tracking-widest text-studio-text-dim">Layers</span>
-            </div>
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-1">
-              {layers.slice().reverse().map((layer, idx) => (
-                <div key={layer.id} className="flex items-center justify-between p-2 rounded bg-black/20 border border-studio-border/30 hover:border-studio-accent/30 group transition-all">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-black/40 border border-studio-border flex items-center justify-center overflow-hidden">
-                      <div className="w-4 h-4 rounded-sm border border-white/20 bg-studio-accent/20" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold uppercase">{layer.type === 'path' ? 'Stroke' : layer.type}</span>
-                      <span className="text-[8px] text-studio-text-dim font-mono">#{layer.id}</span>
-                    </div>
-                  </div>
-                  <button onClick={() => toggleLayer(layers.length - 1 - idx)} className="text-studio-text-dim hover:text-studio-accent transition-colors">
-                    {layer.visible ? <Eye size={14} /> : <EyeOff size={14} className="opacity-40" />}
-                  </button>
-                </div>
-              ))}
-              {layers.length === 0 && (
-                <div className="flex-1 flex flex-col items-center justify-center opacity-30 text-center p-8 gap-2">
-                  <Layers size={32} />
-                  <span className="text-[10px] font-bold">NO OBJECTS</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

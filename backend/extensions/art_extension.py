@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any
 from fastapi import WebSocket
-from studio.backend.art_service import art_service
+from art_service import art_service
 
 logger = logging.getLogger("studio.backend.extensions.art")
 

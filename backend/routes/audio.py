@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from studio.backend.models.request_schemas import ComposeAudioRequest
-from studio.backend.models.response_schemas import AudioResponse
-from studio.backend.audio_service import audio_service
+from models.request_schemas import ComposeAudioRequest
+from models.response_schemas import AudioResponse
+from audio_service import audio_service
 
 router = APIRouter(prefix="/audio", tags=["audio"])
 

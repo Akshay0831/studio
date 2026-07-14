@@ -1,0 +1,261 @@
+{
+  "app": {
+    "title": "Studio d'Édition Unifié",
+    "subtitle": "Génération d'art de sprite et de musique avec IA",
+    "loading": "Chargement...",
+    "error": "Une erreur s'est produite",
+    "retry": "Réessayer"
+  },
+  
+  "navigation": {
+    "home": "Accueil",
+    "imageEditor": "Éditeur d'Images",
+    "audioMixer": "Mélangeur Audio",
+    "chat": "Chat",
+    "settings": "Paramètres",
+    "help": "Aide",
+    "export": "Exporter",
+    "save": "Enregistrer",
+    "newProject": "Nouveau Projet",
+    "openProject": "Ouvrir Projet"
+  },
+  
+  "imageEditor": {
+    "title": "Éditeur d'Images",
+    "tools": {
+      "brush": "Pinceau",
+      "eraser": "Gomme",
+      "fill": "Remplir",
+      "crop": "Rogner",
+      "transform": "Transformer",
+      "select": "Sélectionner"
+    },
+    "layers": {
+      "title": "Couches",
+      "add": "Ajouter Couche",
+      "delete": "Supprimer Couche",
+      "duplicate": "Dupliquer Couche",
+      "moveUp": "Déplacer vers le Haut",
+      "moveDown": "Déplacer vers le Bas",
+      "visibility": "Basculer Visibilité",
+      "opacity": "Opacité",
+      "merge": "Fusionner Couches",
+      "select": "Sélectionner",
+      "selectMultiple": "Sélectionner Multiples",
+      "noLayers": "Aucune Couche",
+      "stroke": "Trace",
+      "layer": "Couche",
+      "image": "Image"
+    },
+    "generation": {
+      "title": "Génération IA",
+      "prompt": "Prompt",
+      "generate": "Générer",
+      "cancel": "Annuler",
+      "regenerate": "Régénérer",
+      "style": "Style",
+      "quality": "Qualité",
+      "size": "Taille"
+    },
+    "export": {
+      "title": "Exporter Image",
+      "format": "Format",
+      "png": "PNG",
+      "jpeg": "JPEG",
+      "gif": "GIF",
+      "svg": "SVG",
+      "webp": "WebP",
+      "quality": "Qualité",
+      "scale": "Échelle",
+      "background": "Arrière-plan",
+      "transparent": "Transparent",
+      "white": "Blanc",
+      "black": "Noir",
+      "custom": "Personnalisé",
+      "download": "Télécharger",
+      "preview": "Aperçu"
+    }
+  },
+  
+  "audioMixer": {
+    "title": "Mélangeur Audio",
+    "tracks": {
+      "add": "Ajouter Piste",
+      "delete": "Supprimer Piste",
+      "mute": "Sourdine",
+      "solo": "Solo",
+      "volume": "Volume",
+      "pan": "Balance",
+      "effects": "Effets"
+    },
+    "generation": {
+      "title": "Génération Audio IA",
+      "style": "Style",
+      "mood": "Humeur",
+      "tempo": "Tempo",
+      "key": "Tonalité",
+      "genre": "Genre",
+      "generate": "Générer",
+      "cancel": "Annuler",
+      "regenerate": "Régénérer"
+    },
+    "export": {
+      "title": "Exporter Audio",
+      "format": "Format",
+      "mp3": "MP3",
+      "wav": "WAV",
+      "flac": "FLAC",
+      "aac": "AAC",
+      "quality": "Qualité",
+      "bitrate": "Débit",
+      "sampleRate": "Taux d'Échantillonnage",
+      "download": "Télécharger",
+      "preview": "Aperçu"
+    }
+  },
+  
+  "chat": {
+    "title": "Assistant IA",
+    "placeholder": "Demandez-moi n'importe quoi sur votre projet...",
+    "send": "Envoyer",
+    "thinking": "Réflexion...",
+    "clear": "Effacer Chat",
+    "save": "Sauvegarder Conversation",
+    "copy": "Copier",
+    "export": "Exporter"
+  },
+  
+  "monitoring": {
+    "title": "Monitorage Système",
+    "gpu": "GPU",
+    "memory": "Mémoire",
+    "cpu": "CPU",
+    "temperature": "Température",
+    "usage": "Utilisation",
+    "status": "Statut",
+    "healthy": "Sain",
+    "warning": "Avertissement",
+    "critical": "Critique"
+  },
+  
+  "settings": {
+    "title": "Paramètres",
+    "general": "Général",
+    "language": "Langue",
+    "theme": "Thème",
+    "darkMode": "Mode Sombre",
+    "lightMode": "Mode Clair",
+    "autoDetect": "Détection Automatique",
+    "performance": "Performance",
+    "gpu": "Paramètres GPU",
+    "cpu": "Paramètres CPU",
+    "memory": "Paramètres Mémoire",
+    "advanced": "Avancé",
+    "debug": "Mode Débogage",
+    "logs": "Journaux",
+    "reset": "Réinitialiser par Défaut",
+    "save": "Enregistrer",
+    "cancel": "Annuler"
+  },
+  
+  "keyboard": {
+    "shortcuts": "Raccourcis Clavier",
+    "help": "Aide",
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "save": "Enregistrer",
+    "export": "Exporter",
+    "zoomIn": "Zoomer",
+    "zoomOut": "Dézoomer",
+    "fitToScreen": "Adapter à l'Écran"
+  },
+  
+  "messages": {
+    "success": "Succès",
+    "error": "Erreur",
+    "warning": "Avertissement",
+    "info": "Information",
+    "confirm": "Confirmer",
+    "yes": "Oui",
+    "no": "Non",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "loading": "Chargement...",
+    "saving": "Enregistrement...",
+    "generating": "Génération...",
+    "exporting": "Exportation...",
+    "uploaded": "Téléversé avec succès",
+    "downloaded": "Téléchargé avec succès"
+  },
+  
+  "errors": {
+    "network": "Erreur réseau",
+    "gpu": "GPU non disponible",
+    "memory": "Limite mémoire dépassée",
+    "invalidInput": "Entrée invalide",
+    "permission": "Permission refusée",
+    "notFound": "Non trouvé",
+    "serverError": "Erreur serveur",
+    "timeout": "Délai dépassé",
+    "unknown": "Erreur inconnue"
+  },
+  
+  "common": {
+    "actions": {
+      "add": "Ajouter",
+      "remove": "Supprimer",
+      "edit": "Modifier",
+      "delete": "Supprimer",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "ok": "OK",
+      "apply": "Appliquer",
+      "reset": "Réinitialiser",
+      "clear": "Effacer",
+      "search": "Rechercher",
+      "filter": "Filtrer",
+      "sort": "Trier",
+      "export": "Exporter",
+      "import": "Importer",
+      "share": "Partager",
+      "copy": "Copier",
+      "paste": "Coller",
+      "undo": "Annuler",
+      "redo": "Rétablir"
+    },
+    
+    "size": {
+      "small": "Petit",
+      "medium": "Moyen",
+      "large": "Grand",
+      "xlarge": "Très Grand"
+    },
+    
+    "quality": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé",
+      "ultra": "Ultra"
+    },
+    
+    "time": {
+      "second": "Seconde",
+      "seconds": "Secondes",
+      "minute": "Minute",
+      "minutes": "Minutes",
+      "hour": "Heure",
+      "hours": "Heures",
+      "day": "Jour",
+      "days": "Jours"
+    },
+    
+    "format": {
+      "date": "DD/MM/AAAA",
+      "time": "HH:MM:SS",
+      "datetime": "DD/MM/AAAA HH:MM:SS"
+    }
+  }
+}

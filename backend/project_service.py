@@ -1,9 +1,9 @@
 import logging
 import asyncio
 from typing import Dict, Any, List, Optional
-from studio.backend.utils.base_service import BaseStudioService
-from studio.backend.utils.telemetry import trace_performance
-from studio.backend.utils.encoding import base64_to_pil
+from utils.base_service import BaseStudioService
+from utils.telemetry import trace_performance
+from utils.encoding import base64_to_pil
 
 logger = logging.getLogger("studio.backend.project_service")
 

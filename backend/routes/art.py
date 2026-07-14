@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
-from studio.backend.models.request_schemas import GenerateImageRequest, InpaintImageRequest
-from studio.backend.models.response_schemas import ImageResponse
-from studio.backend.art_service import art_service
+from models.request_schemas import GenerateImageRequest, InpaintImageRequest
+from models.response_schemas import ImageResponse
+from art_service import art_service
 
 router = APIRouter(prefix="/art", tags=["art"])
 

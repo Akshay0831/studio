@@ -1,0 +1,29 @@
+{
+  "app": {
+    "title": "Unified Editing Studio",
+    "subtitle": "Geração de arte de sprite e música com IA",
+    "loading": "Carregando...",
+    "error": "Ocorreu um erro",
+    "retry": "Tentar novamente"
+  },
+  "navigation": {
+    "home": "Início",
+    "imageEditor": "Editor de Imagens",
+    "audioMixer": "Misturador de Áudio",
+    "chat": "Chat",
+    "settings": "Configurações",
+    "help": "Ajuda",
+    "export": "Exportar",
+    "save": "Salvar",
+    "newProject": "Novo Projeto",
+    "openProject": "Abrir Projeto"
+  },
+  "common": {
+    "actions": {
+      "add": "Adicionar",
+      "remove": "Remover",
+      "save": "Salvar",
+      "cancel": "Cancelar"
+    }
+  }
+}

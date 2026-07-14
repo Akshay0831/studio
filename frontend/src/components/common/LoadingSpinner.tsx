@@ -1,5 +1,3 @@
-import { Loader2 } from 'lucide-react';
-import { ReactNode } from 'react';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';

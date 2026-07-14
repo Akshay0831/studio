@@ -2,13 +2,13 @@ import logging
 import torch
 from typing import Dict, Optional, Any, Callable, List
 
-from studio.backend.config import settings
-from studio.backend.inference_dispatcher import dispatcher
-from studio.backend.utils.telemetry import trace_performance
-from studio.backend.utils.cache import generation_cache
-from studio.backend.utils.encoding import pil_to_base64, base64_to_pil
+from config import settings
+from inference_dispatcher import dispatcher
+from utils.telemetry import trace_performance
+from utils.cache import generation_cache
+from utils.encoding import pil_to_base64, base64_to_pil
 
-from studio.backend.utils.dependency_manager import DependencyManager
+from utils.dependency_manager import DependencyManager
 
 # Engine imports via safety layer
 ModelManager = DependencyManager.get_attr("artsynthesis.modules", "ModelManager")
@@ -37,9 +37,9 @@ if not ModelManager:
         @staticmethod
         def GetDevice(): return "cpu"
 
-from studio.backend.utils.batch_processor import batch_processor
+from utils.batch_processor import batch_processor
 
-from studio.backend.utils.base_service import BaseStudioService
+from utils.base_service import BaseStudioService
 
 logger = logging.getLogger("studio.backend.art_service")
 
