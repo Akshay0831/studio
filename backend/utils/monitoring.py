@@ -108,6 +108,8 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     """Middleware to log all HTTP requests and responses."""
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        start_time = time.time()
+        
         # Log request
         logger.info(
             f"HTTP {request.method} {request.url.path} "
@@ -118,17 +120,15 @@ class LoggingMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         # Log response
+        duration = time.time() - start_time
         logger.info(
             f"HTTP {request.method} {request.url.path} "
             f"- Status: {response.status_code} "
-            f"- Response Time: {response.headers.get('X-Response-Time', 'N/A')}"
+            f"- Response Time: {duration:.2f}s"
         )
 
         # Add custom headers
-        response.headers["X-Response-Time"] = response.headers.get(
-            "X-Response-Time",
-            f"{time.time() - self.start_time:.2f}s"
-        )
+        response.headers["X-Response-Time"] = f"{duration:.2f}s"
 
         return response
 

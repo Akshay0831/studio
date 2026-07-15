@@ -27,6 +27,9 @@ class Settings(BaseModel):
     REPLICATE_API_KEY: Optional[str] = Field(default=os.getenv("REPLICATE_API_KEY"))
     RUNPOD_API_KEY: Optional[str] = Field(default=os.getenv("RUNPOD_API_KEY"))
     
+    # Paths
+    STUDIO_ROOT: str = Field(default=os.getenv("STUDIO_ROOT", str(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+    
     # Rate Limiting
     MAX_REQUESTS_PER_MINUTE: int = Field(default=int(os.getenv("MAX_REQUESTS_PER_MINUTE", "10")))
     

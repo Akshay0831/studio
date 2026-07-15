@@ -3,8 +3,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from starlette.requests import Request
 from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 from config import settings
-from routes import art, audio, enhanced
+from routes import art, audio, enhanced, backup, scaling, config
 from inference_dispatcher import dispatcher
 from websocket_handler import websocket_endpoint, manager
 from utils.gpu import get_vram_info
@@ -58,7 +59,7 @@ app.add_middleware(LoggingMiddleware)
 # Add global error handler
 app.add_exception_handler(Exception, custom_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(pydantic_exception_handler, pydantic_exception_handler)
+app.add_exception_handler(ValidationError, pydantic_exception_handler)
 
 # CORS Configuration
 app.add_middleware(
@@ -93,6 +94,14 @@ async def startup_event():
 app.include_router(art.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
 app.include_router(enhanced.router, prefix="/api")
+app.include_router(backup.router, prefix="/api")
+app.include_router(scaling.router, prefix="/api")
+app.include_router(config.router, prefix="/api")
+
+@app.get("/health")
+async def health_check():
+    """Basic health check endpoint."""
+    return {"status": "ok", "message": "Unified Editing Studio API is running"}
 
 # Ensure output directory exists
 os.makedirs(settings.STUDIO_OUTPUT_PATH, exist_ok=True)
