@@ -14,6 +14,7 @@ const supportedLanguagesList = [
   { code: 'ko', name: 'Korean', nativeName: '한국어', rtl: false },
   { code: 'ru', name: 'Russian', nativeName: 'Русский', rtl: false },
   { code: 'ar', name: 'Arabic', nativeName: 'العربية', rtl: true },
+  { code: 'he', name: 'Hebrew', nativeName: 'עברית', rtl: true },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी', rtl: false }
 ];
 

@@ -174,7 +174,7 @@ class HealthMonitor:
                 if self.request_count > 0 else 0
             ),
             "avg_response_time": round(self.avg_response_time, 3),
-            "min_response_time": round(self.min_response_time, 3),
+            "min_response_time": round(self.min_response_time, 3) if self.min_response_time != float('inf') else 0,
             "max_response_time": round(self.max_response_time, 3),
             "requests_per_minute": round(
                 (self.request_count / uptime) * 60, 2

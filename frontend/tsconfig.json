@@ -16,6 +16,14 @@
     "esModuleInterop": true,
     "moduleDetection": "force",
 
+    /* Path mapping */
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/i18n/*": ["./src/i18n/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,

@@ -1,0 +1,58 @@
+{
+  "app": {
+    "title": "אולפן עריכה מאוחד",
+    "subtitle": "יצירת ארט ספרייט ומוזיקה עם בינה מלאכותית",
+    "loading": "טוען...",
+    "error": "אירעה שגיאה",
+    "retry": "נסה שוב"
+  },
+  
+  "navigation": {
+    "home": "בית",
+    "imageEditor": "עורך תמונות",
+    "audioMixer": "מעבד אודיו",
+    "chat": "צ'אט",
+    "settings": "הגדרות",
+    "help": "עזרה",
+    "export": "ייצוא",
+    "save": "שמירה",
+    "newProject": "פרויקט חדש",
+    "openProject": "פתיחת פרויקט"
+  },
+  
+  "production": {
+    "dashboard": "לוח בקרת הפקה",
+    "lastUpdated": "עודכן לאחרונה",
+    "refresh": "רענון",
+    "systemHealth": "בריאות המערכת",
+    "backupStatus": "מצב גיבוי",
+    "scalingStatus": "מצב סילום",
+    "configStatus": "מצב הגדרות",
+    "backupDirectory": "תיקיית גיבוי",
+    "diskSpace": "מקום בדיסק",
+    "autoBackup": "גיבוי אוטומטי",
+    "instances": "מופעים",
+    "cpuUsage": "שימוש במעבד",
+    "memoryUsage": "שימוש בזיכרון",
+    "autoScaling": "סילום אוטומטי",
+    "enabled": "מאופשר",
+    "disabled": "מושבת",
+    "currentEnvironment": "סביבה נוכחית",
+    "availableEnvironments": "סביבות זמינות",
+    "quickActions": "פעולות מהירות",
+    "createBackup": "יצירת גיבוי",
+    "scaleUp": "הגדלת סילום",
+    "configSettings": "הגדרות מערכת",
+    "monitoring": "ניטור",
+    "backup": "גיבוי",
+    "config": "הגדרות",
+    "monitoringDescription": "ניטור מערכת בזמן אמת ומדדים",
+    "backupDescription": "פעולות גיבוי ושחזור",
+    "configDescription": "הגדרות סביבה ומערכת",
+    "loading": "טוען נתוני הפקה...",
+    "healthy": "בריא",
+    "degraded": "ירידה בביצועים",
+    "error": "שגיאה",
+    "warning": "אזהרה"
+  }
+}

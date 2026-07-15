@@ -25,5 +25,41 @@
       "save": "保存",
       "cancel": "キャンセル"
     }
+  },
+  
+  "production": {
+    "dashboard": "プロダクションダッシュボード",
+    "lastUpdated": "最終更新",
+    "refresh": "更新",
+    "systemHealth": "システムヘルス",
+    "backupStatus": "バックアップ状態",
+    "scalingStatus": "スケーリング状態",
+    "configStatus": "設定状態",
+    "backupDirectory": "バックアップディレクトリ",
+    "diskSpace": "ディスク容量",
+    "autoBackup": "自動バックアップ",
+    "instances": "インスタンス",
+    "cpuUsage": "CPU使用率",
+    "memoryUsage": "メモリ使用率",
+    "autoScaling": "自動スケーリング",
+    "enabled": "有効",
+    "disabled": "無効",
+    "currentEnvironment": "現在の環境",
+    "availableEnvironments": "利用可能な環境",
+    "quickActions": "クイックアクション",
+    "createBackup": "バックアップ作成",
+    "scaleUp": "スケールアップ",
+    "configSettings": "設定設定",
+    "monitoring": "モニタリング",
+    "backup": "バックアップ",
+    "config": "設定",
+    "monitoringDescription": "リアルタイムシステム監視とメトリクス",
+    "backupDescription": "バックアップと復元操作",
+    "configDescription": "環境とシステム設定",
+    "loading": "生産データを読み込み中...",
+    "healthy": "健康",
+    "degraded": "劣化",
+    "error": "エラー",
+    "warning": "警告"
   }
 }

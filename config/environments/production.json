@@ -1,0 +1,61 @@
+{
+  "server": {
+    "host": "0.0.0.0",
+    "port": 8000,
+    "debug": false,
+    "reload": false,
+    "workers": 4
+  },
+  "database": {
+    "url": "sqlite:///studio.db",
+    "pool_size": 5,
+    "timeout": 30
+  },
+  "ai": {
+    "model_path": "models",
+    "cache_dir": "cache",
+    "max_concurrent_requests": 8,
+    "request_timeout": 300,
+    "batch_size": 1,
+    "precision": "float16"
+  },
+  "monitoring": {
+    "enabled": true,
+    "metrics_port": 8080,
+    "log_level": "WARNING",
+    "health_check_interval": 30
+  },
+  "security": {
+    "rate_limit": {
+      "enabled": true,
+      "requests_per_minute": 60,
+      "burst_size": 10
+    },
+    "cors": {
+      "enabled": true,
+      "allow_origins": [
+        "*"
+      ],
+      "allow_methods": [
+        "*"
+      ],
+      "allow_headers": [
+        "*"
+      ]
+    }
+  },
+  "storage": {
+    "max_file_size": 104857600,
+    "allowed_extensions": [
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".mp3",
+      ".wav",
+      ".json"
+    ],
+    "temp_dir": "temp",
+    "cleanup_interval": 3600
+  }
+}

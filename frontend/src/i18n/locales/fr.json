@@ -257,5 +257,41 @@
       "time": "HH:MM:SS",
       "datetime": "DD/MM/AAAA HH:MM:SS"
     }
+  },
+  
+  "production": {
+    "dashboard": "Tableau de Bord de Production",
+    "lastUpdated": "Dernière Mise à Jour",
+    "refresh": "Actualiser",
+    "systemHealth": "État du Système",
+    "backupStatus": "État de Sauvegarde",
+    "scalingStatus": "État de Mise à l'Échelle",
+    "configStatus": "État de Configuration",
+    "backupDirectory": "Répertoire de Sauvegarde",
+    "diskSpace": "Espace Disque",
+    "autoBackup": "Sauvegarde Automatique",
+    "instances": "Instances",
+    "cpuUsage": "Utilisation CPU",
+    "memoryUsage": "Utilisation Mémoire",
+    "autoScaling": "Mise à l'Échelle Automatique",
+    "enabled": "Activé",
+    "disabled": "Désactivé",
+    "currentEnvironment": "Environnement Actuel",
+    "availableEnvironments": "Environnements Disponibles",
+    "quickActions": "Actions Rapides",
+    "createBackup": "Créer une Sauvegarde",
+    "scaleUp": "Augmenter l'Échelle",
+    "configSettings": "Paramètres de Configuration",
+    "monitoring": "Surveillance",
+    "backup": "Sauvegarde",
+    "config": "Configuration",
+    "monitoringDescription": "Surveillance en temps réel du système et des métriques",
+    "backupDescription": "Opérations de sauvegarde et de restauration",
+    "configDescription": "Configuration d'environnement et de système",
+    "loading": "Chargement des données de production...",
+    "healthy": "Sain",
+    "degraded": "Dégradé",
+    "error": "Erreur",
+    "warning": "Avertissement"
   }
 }

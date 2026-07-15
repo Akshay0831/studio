@@ -25,5 +25,41 @@
       "save": "Speichern",
       "cancel": "Abbrechen"
     }
+  },
+  
+  "production": {
+    "dashboard": "Produktions-Dashboard",
+    "lastUpdated": "Zuletzt Aktualisiert",
+    "refresh": "Aktualisieren",
+    "systemHealth": "System-Gesundheit",
+    "backupStatus": "Backup-Status",
+    "scalingStatus": "Skalierungs-Status",
+    "configStatus": "Konfigurations-Status",
+    "backupDirectory": "Backup-Verzeichnis",
+    "diskSpace": "Platzbedarf",
+    "autoBackup": "Automatisches Backup",
+    "instances": "Instanzen",
+    "cpuUsage": "CPU-Auslastung",
+    "memoryUsage": "Speicherauslastung",
+    "autoScaling": "Automatische Skalierung",
+    "enabled": "Aktiviert",
+    "disabled": "Deaktiviert",
+    "currentEnvironment": "Aktuelle Umgebung",
+    "availableEnvironments": "Verfügbare Umgebungen",
+    "quickActions": "Schnelle Aktionen",
+    "createBackup": "Backup Erstellen",
+    "scaleUp": "Skalieren",
+    "configSettings": "Konfigurationseinstellungen",
+    "monitoring": "Überwachung",
+    "backup": "Backup",
+    "config": "Konfiguration",
+    "monitoringDescription": "Echtzeit-Systemüberwachung und Metriken",
+    "backupDescription": "Backup- und Wiederherstellungsvorgänge",
+    "configDescription": "Umgebungs- und Systemkonfiguration",
+    "loading": "Produktionsdaten werden geladen...",
+    "healthy": "Gesund",
+    "degraded": "Deklassiert",
+    "error": "Fehler",
+    "warning": "Warnung"
   }
 }

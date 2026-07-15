@@ -126,17 +126,24 @@ async def health_check():
         "engines": DependencyManager.get_health_report(),
         "uptime_seconds": round(time.time() - start_time, 2),
         "version": "1.0.0",
-        "monitoring": {
-            "total_requests": health_monitor.request_count,
-            "uptime_seconds": health_monitor.uptime_seconds,
-            "avg_response_time": health_monitor.avg_response_time,
-            "success_rate": health_monitor.success_rate
-        }
+        "monitoring": health_monitor.get_stats()
     }
+
+    # Clean up any potential infinity values
+    def clean_infinity(obj):
+        if isinstance(obj, dict):
+            return {k: clean_infinity(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [clean_infinity(v) for v in obj]
+        elif isinstance(obj, float) and obj == float('inf'):
+            return 0.0
+        else:
+            return obj
 
     logger.info("Health check requested")
 
-    return health_data
+    return clean_infinity(health_data)
+
 
 
 @app.get("/api/monitoring")

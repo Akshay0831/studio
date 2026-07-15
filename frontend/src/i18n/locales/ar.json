@@ -25,5 +25,41 @@
       "save": "حفظ",
       "cancel": "إلغاء"
     }
+  },
+  
+  "production": {
+    "dashboard": "لوحة التحكم الإنتاجية",
+    "lastUpdated": "آخر تحديث",
+    "refresh": "تحديث",
+    "systemHealth": "صحة النظام",
+    "backupStatus": "حالة النسخ الاحتياطي",
+    "scalingStatus": "حالة التوسع",
+    "configStatus": "حالة التكوين",
+    "backupDirectory": "دليل النسخ الاحتياطي",
+    "diskSpace": "مساحة القرص",
+    "autoBackup": "النسخ الاحتياطي التلقائي",
+    "instances": "المثيلات",
+    "cpuUsage": "استخدام المعالج",
+    "memoryUsage": "استخدام الذاكرة",
+    "autoScaling": "التوسع التلقائي",
+    "enabled": "مفعل",
+    "disabled": "معطّل",
+    "currentEnvironment": "البيئة الحالية",
+    "availableEnvironments": "البيئات المتاحة",
+    "quickActions": "إجراءات سريعة",
+    "createBackup": "إنشاء نسخة احتياطية",
+    "scaleUp": "التوسع",
+    "configSettings": "إعدادات التكوين",
+    "monitoring": "مراقبة",
+    "backup": "نسخ احتياطي",
+    "config": "تكوين",
+    "monitoringDescription": "مراقبة النظام الفورية والمؤشرات",
+    "backupDescription": "عمليات النسخ الاحتياطي والاستعادة",
+    "configDescription": "تكوين البيئة والنظام",
+    "loading": "جاري تحميل بيانات الإنتاج...",
+    "healthy": "صحي",
+    "degraded": "مُتدهور",
+    "error": "خطأ",
+    "warning": "تحذير"
   }
 }

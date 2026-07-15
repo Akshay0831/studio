@@ -39,6 +39,7 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
       ko: '🇰🇷',
       ru: '🇷🇺',
       ar: '🇸🇦',
+      he: '🇮🇱',
       hi: '🇮🇳'
     };
     return flagMap[languageCode] || '🌐';

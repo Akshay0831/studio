@@ -25,5 +25,41 @@
       "save": "सेव करें",
       "cancel": "रद्द करें"
     }
+  },
+  
+  "production": {
+    "dashboard": "प्रोडक्शन डैशबोर्ड",
+    "lastUpdated": "अंतिम अपडेट",
+    "refresh": "रिफ्रेश",
+    "systemHealth": "सिस्टम स्वास्थ्य",
+    "backupStatus": "बैकअप स्थिति",
+    "scalingStatus": "स्केलिंग स्थिति",
+    "configStatus": "कॉन्फिग स्थिति",
+    "backupDirectory": "बैकअप डायरेक्टरी",
+    "diskSpace": "डिस्क स्पेस",
+    "autoBackup": "ऑटो बैकअप",
+    "instances": "इंस्टेंसेस",
+    "cpuUsage": "CPU उपयोग",
+    "memoryUsage": "मेमोरी उपयोग",
+    "autoScaling": "ऑटो स्केलिंग",
+    "enabled": "सक्षम",
+    "disabled": "अक्षम",
+    "currentEnvironment": "वर्तमान वातावरण",
+    "availableEnvironments": "उपलब्ध वातावरण",
+    "quickActions": "तेजी से कार्य",
+    "createBackup": "बैकअ्प बनाएं",
+    "scaleUp": "स्केल अप",
+    "configSettings": "कॉन्फिगरेशन सेटिंग्स",
+    "monitoring": "निगरानी",
+    "backup": "बैकअप",
+    "config": "कॉन्फिगरेशन",
+    "monitoringDescription": "रियल-टाइम सिस्टम मॉनिटरिंग और मेट्रिक्स",
+    "backupDescription": "बैकअप और रिस्टोर ऑपरेशन",
+    "configDescription": "वातावरण और सिस्टम कॉन्फिगरेशन",
+    "loading": "प्रोडक्शन डेटा लोड हो रहा है...",
+    "healthy": "स्वस्थ",
+    "degraded": "गिरावट",
+    "error": "गलती",
+    "warning": "चेतावनी"
   }
 }

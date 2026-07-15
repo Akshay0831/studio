@@ -12,9 +12,21 @@ import {
   TrendingDown,
   RefreshCw
 } from 'lucide-react';
-import { useTranslation } from '../i18n/hooks/useTranslation';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
+import { useTranslation } from '@/i18n/hooks/useTranslation';
+import Button from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+
+const formatDuration = (seconds: number): string => {
+  if (!seconds) return '0s';
+  
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  
+  if (mins > 0) {
+    return `${mins}m ${secs}s`;
+  }
+  return `${secs}s`;
+};
 
 interface SystemMetrics {
   timestamp: number;
@@ -396,7 +408,7 @@ const ProductionMonitoringDashboard: React.FC = () => {
       )}
 
       {/* Cooldown Status */}
-      {metrics?.scaling?.cooldown_remaining > 0 && (
+      {metrics?.scaling?.cooldown_remaining && metrics.scaling.cooldown_remaining > 0 && (
         <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <div className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-600" />

@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ProductionMonitoringDashboard, 
-  BackupManager, 
-  ConfigManager 
-} from './ProductionMonitoringDashboard';
+import ProductionMonitoringDashboard from './ProductionMonitoringDashboard';
+import BackupManager from './BackupManager';
+import ConfigManager from './ConfigManager';
 import { useTranslation } from '../i18n/hooks/useTranslation';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';

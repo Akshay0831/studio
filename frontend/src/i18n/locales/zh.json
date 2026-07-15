@@ -25,5 +25,41 @@
       "save": "保存",
       "cancel": "取消"
     }
+  },
+  
+  "production": {
+    "dashboard": "生产仪表板",
+    "lastUpdated": "最后更新",
+    "refresh": "刷新",
+    "systemHealth": "系统健康",
+    "backupStatus": "备份状态",
+    "scalingStatus": "扩展状态",
+    "configStatus": "配置状态",
+    "backupDirectory": "备份目录",
+    "diskSpace": "磁盘空间",
+    "autoBackup": "自动备份",
+    "instances": "实例",
+    "cpuUsage": "CPU使用率",
+    "memoryUsage": "内存使用率",
+    "autoScaling": "自动扩展",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "currentEnvironment": "当前环境",
+    "availableEnvironments": "可用环境",
+    "quickActions": "快速操作",
+    "createBackup": "创建备份",
+    "scaleUp": "向上扩展",
+    "configSettings": "配置设置",
+    "monitoring": "监控",
+    "backup": "备份",
+    "config": "配置",
+    "monitoringDescription": "实时系统监控和指标",
+    "backupDescription": "备份和恢复操作",
+    "configDescription": "环境和系统配置",
+    "loading": "加载生产数据...",
+    "healthy": "健康",
+    "degraded": "降级",
+    "error": "错误",
+    "warning": "警告"
   }
 }

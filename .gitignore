@@ -123,6 +123,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.pytest_cache/
+.coverage
+htmlcov/
 
 # Spyder project settings
 .spyderproject
@@ -147,6 +150,39 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Studio-specific files
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+temp_*
+*.tmp
+*.temp
 
 # PyCharm
 .idea/

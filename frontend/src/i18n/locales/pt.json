@@ -25,5 +25,41 @@
       "save": "Salvar",
       "cancel": "Cancelar"
     }
+  },
+  
+  "production": {
+    "dashboard": "Painel de Produção",
+    "lastUpdated": "Última Atualização",
+    "refresh": "Atualizar",
+    "systemHealth": "Saúde do Sistema",
+    "backupStatus": "Status de Backup",
+    "scalingStatus": "Status de Escala",
+    "configStatus": "Status de Configuração",
+    "backupDirectory": "Diretório de Backup",
+    "diskSpace": "Espaço em Disco",
+    "autoBackup": "Backup Automático",
+    "instances": "Instâncias",
+    "cpuUsage": "Uso de CPU",
+    "memoryUsage": "Uso de Memória",
+    "autoScaling": "Escala Automática",
+    "enabled": "Ativado",
+    "disabled": "Desativado",
+    "currentEnvironment": "Ambiente Atual",
+    "availableEnvironments": "Ambientes Disponíveis",
+    "quickActions": "Ações Rápidas",
+    "createBackup": "Criar Backup",
+    "scaleUp": "Aumentar Escala",
+    "configSettings": "Configurações do Sistema",
+    "monitoring": "Monitoramento",
+    "backup": "Backup",
+    "config": "Configuração",
+    "monitoringDescription": "Monitoramento em tempo real do sistema e métricas",
+    "backupDescription": "Operações de backup e restauração",
+    "configDescription": "Configuração de ambiente e sistema",
+    "loading": "Carregando dados de produção...",
+    "healthy": "Saudável",
+    "degraded": "Degradado",
+    "error": "Erro",
+    "warning": "Aviso"
   }
 }
