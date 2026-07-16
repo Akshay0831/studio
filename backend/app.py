@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from config import settings
 from routes import art, audio, enhanced, backup, scaling, config
+from api.image_processing import router as image_processing_router
 from inference_dispatcher import dispatcher
 from websocket_handler import websocket_endpoint, manager
 from utils.gpu import get_vram_info
@@ -97,6 +98,7 @@ app.include_router(enhanced.router, prefix="/api")
 app.include_router(backup.router, prefix="/api")
 app.include_router(scaling.router, prefix="/api")
 app.include_router(config.router, prefix="/api")
+app.include_router(image_processing_router, prefix="/api")
 
 @app.get("/health")
 async def health_check():
