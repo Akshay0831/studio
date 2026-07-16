@@ -8,34 +8,17 @@ from utils.telemetry import trace_performance
 from utils.cache import generation_cache
 from utils.encoding import pil_to_base64, base64_to_pil
 
-from utils.dependency_manager import DependencyManager
+# Use our real AI implementations instead of mocks
+from ai_models.model_manager import ModelManager, get_model_manager
+from ai_models.device_utils import DeviceUtils, get_device
+from ai_models.model_types import ModelType, QuantizationType
 
-# Engine imports via safety layer
-ModelManager = DependencyManager.get_attr("artsynthesis.modules", "ModelManager")
-FeedbackIntegration = DependencyManager.get_attr("artsynthesis.modules", "FeedbackIntegration")
-DeviceUtils = DependencyManager.get_attr("artsynthesis.utils", "DeviceUtils")
-ModelType = DependencyManager.get_attr("artsynthesis.config", "ModelType")
-QuantizationType = DependencyManager.get_attr("artsynthesis.config", "QuantizationType")
-
-# Fallbacks if engines are missing
-if not ModelManager:
-    class ModelType: SDXL = "sdxl"; FLUX = "flux"
-    class QuantizationType: NONE = "none"
-    class ModelManager:
-        def __init__(self): pass
-        def GetPipeline(self, *args, **kwargs):
-            class DummyPipe:
-                def __call__(self, *args, **kwargs):
-                    class DummyResult: images = [None]
-                    return DummyResult()
-            return DummyPipe()
-    class FeedbackIntegration:
-        def __init__(self): pass
-        def RecordScore(self, *args): pass
-        def GetAverageScore(self, *args): return 0.0
-    class DeviceUtils:
-        @staticmethod
-        def GetDevice(): return "cpu"
+# Mock feedback integration for now (we'll implement this properly later)
+class FeedbackIntegration:
+    def __init__(self):
+        pass
+    def RecordScore(self, *args): pass
+    def GetAverageScore(self, *args): return 0.0
 
 from utils.batch_processor import batch_processor
 
@@ -46,9 +29,9 @@ logger = logging.getLogger("studio.backend.art_service")
 class ArtService(BaseStudioService):
     def __init__(self):
         super().__init__("art")
-        self.model_manager = ModelManager()
+        self.model_manager = ModelManager()  # Use separate instance for better memory control
         self.feedback_system = FeedbackIntegration()
-        self.device = DeviceUtils.GetDevice()
+        self.device = get_device()
         
         # Register batch handlers
         batch_processor.register_handler("generate_image", self._handle_batch_generate)

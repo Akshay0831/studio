@@ -1,0 +1,245 @@
+# Phase 3: Enhancements - OpenAPI Documentation (Swagger)
+openapi: 3.0.3
+info:
+  title: Unified Editing Studio API
+  version: 1.0.0
+  description: |
+    Complete API for AI-powered sprite art and music generation.
+    Supports image generation, audio generation, project management,
+    and batch operations with real-time collaboration.
+  contact:
+    name: Unified Editing Studio Team
+    email: support@unifiedediting.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://studio.unifiedediting.com
+    description: Production server
+
+tags:
+  - name: authentication
+    description: Authentication and authorization endpoints
+  - name: images
+    description: Image generation and manipulation
+  - name: audio
+    description: Audio generation and processing
+  - name: projects
+    description: Project management
+  - name: enhanced
+    description: Enhanced features and batch operations
+  - name: health
+    description: System health and monitoring
+
+paths:
+  /api/v1/images/generate:
+    post:
+      tags: [images]
+      summary: Generate AI image from text prompt
+      description: Create images using Stable Diffusion XL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt, seed]
+              properties:
+                prompt:
+                  type: string
+                  description: Text description of the desired image
+                  maxLength: 10000
+                seed:
+                  type: integer
+                  description: Random seed for reproducibility
+                  minimum: 0
+                steps:
+                  type: integer
+                  description: Number of inference steps
+                  default: 30
+                  minimum: 1
+                  maximum: 100
+                width:
+                  type: integer
+                  description: Image width in pixels
+                  default: 1024
+                height:
+                  type: integer
+                  description: Image height in pixels
+                  default: 1024
+      responses:
+        '200':
+          description: Image generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  image_base64:
+                    type: string
+                    format: binary
+                  seed:
+                    type: integer
+                  format:
+                    type: string
+                    enum: [png, jpeg]
+                  duration:
+                    type: number
+                    format: float
+        '400':
+          description: Invalid request parameters
+        '500':
+          description: Server error
+
+  /api/v1/audio/generate:
+    post:
+      tags: [audio]
+      summary: Generate AI audio from text prompt
+      description: Create audio clips using AI models
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [prompt]
+              properties:
+                prompt:
+                  type: string
+                  description: Text description of desired audio
+                  maxLength: 500
+                duration:
+                  type: number
+                  description: Audio duration in seconds
+                  default: 5.0
+                  minimum: 1.0
+                  maximum: 60.0
+                sample_rate:
+                  type: integer
+                  description: Sample rate in Hz
+                  default: 22050
+      responses:
+        '200':
+          description: Audio generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  audio_base64:
+                    type: string
+                    format: binary
+                  sample_rate:
+                    type: integer
+                  duration:
+                    type: number
+
+  /api/v1/enhanced/projects:
+    get:
+      tags: [enhanced]
+      summary: List all projects
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    description:
+                      type: string
+    post:
+      tags: [enhanced]
+      summary: Create new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Project created
+
+  /api/v1/enhanced/projects/{project_id}:
+    get:
+      tags: [enhanced]
+      summary: Get project details
+    put:
+      tags: [enhanced]
+      summary: Update project
+    delete:
+      tags: [enhanced]
+      summary: Delete project
+
+  /api/v1/enhanced/batch-generate:
+    post:
+      tags: [enhanced]
+      summary: Generate multiple items in batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                prompts:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Batch generation results
+
+  /health:
+    get:
+      tags: [health]
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded, unhealthy]
+                  services:
+                    type: object
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        type:
+          type: string
+        detail:
+          type: string
+        timestamp:
+          type: string
+          format: date-time

@@ -1,16 +1,23 @@
 import logging
+import asyncio
 from typing import Dict, Optional, Any, Callable, List
 
 from config import settings
 from inference_dispatcher import dispatcher
 from utils.telemetry import trace_performance
 from utils.cache import generation_cache
+from utils.encoding import audio_to_base64
+from ai_models.audio_model import get_audio_model
 
+# Try to import AudioLayerEngine for advanced features
 try:
     from audiolayer.engine import CompositionOrchestrator
     from audiolayer.config import MusicGenerationConfig
+    _AUDIO_LAYER_AVAILABLE = True
 except ImportError:
-    logging.error("Failed to import AudioLayerEngine modules. Ensure path is configured in settings.")
+    logging.warning("AudioLayerEngine not available - using mock implementation")
+    _AUDIO_LAYER_AVAILABLE = False
+    
     # Fallback definitions
     class MusicGenerationConfig:
         def __init__(self):
@@ -32,6 +39,7 @@ class AudioService(BaseStudioService):
     def __init__(self):
         super().__init__("audio")
         self.orchestrator: Optional[CompositionOrchestrator] = None
+        self.audio_model = get_audio_model()
 
     def _ensure_orchestrator(self, audio_config: Dict[str, Any]):
         """Initializes the orchestrator lazily."""
@@ -122,5 +130,51 @@ class AudioService(BaseStudioService):
         """Applies a chain of audio effects."""
         logger.info(f"Applying effect chain: {list(effects_config.keys())}")
         return {"audio_base64": audio_data_base64, "applied_effects": list(effects_config.keys())}
+
+    async def generate(
+        self,
+        prompt: str,
+        duration: float = 5.0,
+        sample_rate: int = 22050,
+        format: str = "wav",
+        stream_callback: Optional[Callable] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate audio from text prompt using AI model
+        This is a simplified implementation for Phase 1 completion
+        """
+        logger.info(f"Generating audio via AI model | Prompt: {prompt[:50]}... | Duration: {duration}s")
+        
+        # Generate audio using real AI model
+        result = self.audio_model.Generate(
+            prompt=prompt,
+            duration=duration,
+            sample_rate=sample_rate,
+            seed=42
+        )
+        
+        # Convert to base64 for transmission
+        audio_base64 = audio_to_base64(
+            result['audio'],
+            sample_rate=result['sample_rate'],
+            format=format
+        )
+        
+        # Send progress if callback provided
+        if stream_callback:
+            await stream_callback({
+                "progress": 100,
+                "status": "completed",
+                "audio_size": len(audio_base64)
+            })
+        
+        logger.info(f"✅ Audio generation successful: {result['duration']}s @ {result['sample_rate']}Hz")
+        return {
+            "audio_base64": audio_base64,
+            "sample_rate": result['sample_rate'],
+            "duration": result['duration'],
+            "format": format,
+            "backend": "local_ai"
+        }
 
 audio_service = AudioService()
