@@ -3,10 +3,9 @@ import { Canvas, FabricObject } from 'fabric';
 import { 
   Palette, Settings, Sun, Moon, Contrast, Droplets, Activity, 
   Sliders, BarChart3, Eye, EyeOff, Download, RotateCcw, Zap,
-  Curve, Target
+  TrendingUp, Target
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useTranslation } from '../../i18n/hooks/useTranslation';
 import { AdjustmentType, Adjustment, CurvesPoint, ColorToneToolsProps } from './types';
 
 // Color Balance Interface
@@ -16,26 +15,16 @@ interface ColorBalance {
   highlights: { red: number; green: number; blue: number };
 }
 
-// Curves Point Interface
-interface CurvesPoint {
-  x: number;
-  y: number;
-  input: number;
-  output: number;
-}
 
-interface ColorToneToolsProps {
-  canvas: Canvas | null;
-  selectedLayers: FabricObject[];
-  onAdjustmentApplied: () => void;
-}
+
+
 
 const ColorToneTools: React.FC<ColorToneToolsProps> = ({ 
   canvas, 
   selectedLayers, 
   onAdjustmentApplied 
 }) => {
-  const { t } = useTranslation();
+  const { t } = { t: (key: string) => key }; // Mock translation function
   
   const [activeAdjustment, setActiveAdjustment] = useState<AdjustmentType | null>(null);
   const [adjustments, setAdjustments] = useState<Map<AdjustmentType, number>>(new Map());
@@ -195,13 +184,12 @@ const ColorToneTools: React.FC<ColorToneToolsProps> = ({
     // Create a filter for the adjustment
     const filter = createAdjustmentFilter(adjustmentId, value);
     
-    if (!layer.filters) {
-      layer.filters = [];
+    // Apply filter using Fabric.js filter API
+    if (typeof layer.set === 'function') {
+      layer.set('filter', filter);
+      layer.set('dirty', true);
     }
     
-    // Apply filter
-    layer.filters.push(filter);
-    layer.applyFilters();
     canvas.renderAll();
   };
 
@@ -365,10 +353,13 @@ const ColorToneTools: React.FC<ColorToneToolsProps> = ({
     if (!canvas || selectedLayers.length === 0) return;
 
     selectedLayers.forEach(layer => {
-      layer.filters = layer.filters?.filter(f => 
+      const filters = layer.filters?.filter((f: any) => 
         !adjustmentDefinitions.some(adj => adj.id === f.type)
       );
-      layer.applyFilters();
+      if (filters) {
+        layer.set('filters', filters);
+        layer.set('dirty', true);
+      }
     });
     
     const resetAdjustments = new Map();
@@ -584,7 +575,7 @@ const ColorToneTools: React.FC<ColorToneToolsProps> = ({
       {/* Curves Section */}
       <div className="border-t border-studio-border p-3">
         <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-          <Curve size={14} />
+          <TrendingUp size={14} />
           Curves
         </h4>
         <div className="space-y-3">

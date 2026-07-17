@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Canvas, fabric } from 'fabric';
+import { Canvas } from 'fabric';
+import * as fabric from 'fabric';
 import { 
   Folder, 
   FolderOpen, 
@@ -17,7 +18,6 @@ import {
   Plus
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useScalableLayout } from '../../core/useScalableLayout';
 import { Layer, LayerGroup, ToolType } from './types';
 
 // Props interface
@@ -30,7 +30,6 @@ interface LayerManagerProps {
 
 const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, selectedTool, toolSettings }) => {
   const { t } = useTranslation();
-  const { config } = useScalableLayout();
   const [layers, setLayers] = useState<Layer[]>([]);
   const [showLayers, setShowLayers] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
@@ -39,11 +38,16 @@ const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, sele
   const [dragDirection, setDragDirection] = useState<'up' | 'down' | null>(null);
   const [editingLayer, setEditingLayer] = useState<string | null>(null);
   const [tempLayerName, setTempLayerName] = useState('');
-  const [contextMenu, setContextMenu] = useState({
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    layerId: string | null;
+  }>({
     visible: false,
     x: 0,
     y: 0,
-    layerId: string | null
+    layerId: null
   });
   const [transformControlsOpen, setTransformControlsOpen] = useState(false);
   const [currentTransformLayer, setCurrentTransformLayer] = useState<{
@@ -64,7 +68,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, sele
           id: `layer-${index}`,
           name: `Layer ${index + 1}`,
           visible: obj.visible !== false,
-          locked: obj.locked || false,
+          locked: false,
           opacity: obj.opacity || 1,
           blendMode: obj.globalCompositeOperation || 'source-over',
           selected: false
@@ -129,7 +133,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, sele
     const layerIndex = layers.findIndex(layer => layer.id === layerId);
     if (layerIndex >= 0 && layerIndex < canvas.getObjects().length) {
       const obj = canvas.getObjects()[layerIndex];
-      obj.set({ locked: !obj.locked });
+      obj.set({ selectable: false });
       canvas.renderAll();
     }
   };
@@ -157,11 +161,17 @@ const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, sele
     const obj = objects[layerIndex];
 
     if (direction === 'up' && layerIndex > 0) {
-      canvas.remove(obj);
-      canvas.insertAt(obj, layerIndex - 1);
+      const objects = canvas.getObjects();
+      objects.splice(layerIndex, 1);
+      objects.splice(layerIndex - 1, 0, obj);
+      canvas.clear();
+      objects.forEach(obj => canvas.add(obj));
     } else if (direction === 'down' && layerIndex < objects.length - 1) {
-      canvas.remove(obj);
-      canvas.insertAt(obj, layerIndex + 1);
+      const objects = canvas.getObjects();
+      objects.splice(layerIndex, 1);
+      objects.splice(layerIndex + 1, 0, obj);
+      canvas.clear();
+      objects.forEach(obj => canvas.add(obj));
     }
 
     canvas.renderAll();
@@ -384,8 +394,8 @@ const LayerManager: React.FC<LayerManagerProps> = ({ canvas, onLayerSelect, sele
           <div className="py-1">
             <button
               onClick={() => {
-                deleteLayer(contextMenu.layerId!);
-                setContextMenu({ visible: false, x: 0, y: 0, layerId: null });
+                deleteLayer(contextMenu.layerId! as string);
+                setContextMenu({ visible: false, x: 0, y: 0, layerId: null as string | null });
               }}
               className="w-full text-left px-4 py-2 hover:bg-studio-panel-hover cursor-pointer text-xs text-red-400"
             >

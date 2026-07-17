@@ -1,6 +1,7 @@
 // Shared type definitions for Art Studio components
 
-import { Canvas, fabric } from 'fabric';
+import { Canvas } from 'fabric';
+import * as fabric from 'fabric';
 
 // Point type for canvas coordinates
 export interface Point {
@@ -111,7 +112,11 @@ export enum AdjustmentType {
   SHARPEN = 'sharpen',
   NOISE = 'noise',
   LEVELS = 'levels',
-  CURVES = 'curves'
+  CURVES = 'curves',
+  SHADOWS = 'shadows',
+  HIGHLIGHTS = 'highlights',
+  WHITES = 'whites',
+  BLACKS = 'blacks'
 }
 
 // Adjustment Settings

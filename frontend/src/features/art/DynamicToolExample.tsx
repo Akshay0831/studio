@@ -41,11 +41,11 @@ export const DynamicBrushTool: React.FC<DynamicToolProps> = ({
   // Load brush presets
   useEffect(() => {
     const presets = [
-      { id: 'soft', name: 'Soft Brush', size: 15, color: '#000000', opacity: 0.8, blendMode: 'source-over' },
-      { id: 'hard', name: 'Hard Brush', size: 25, color: '#000000', opacity: 1, blendMode: 'source-over' },
-      { id: 'eraser', name: 'Eraser', size: 30, color: 'transparent', opacity: 1, blendMode: 'destination-out' },
-      { id: 'multiply', name: 'Multiply', size: 20, color: '#666666', opacity: 0.6, blendMode: 'multiply' },
-      { id: 'screen', name: 'Screen', size: 25, color: '#ffffff', opacity: 0.6, blendMode: 'screen' }
+      { id: 'soft', name: 'Soft Brush', size: 15, color: '#000000', opacity: 0.8, blendMode: 'source-over' as GlobalCompositeOperation },
+      { id: 'hard', name: 'Hard Brush', size: 25, color: '#000000', opacity: 1, blendMode: 'source-over' as GlobalCompositeOperation },
+      { id: 'eraser', name: 'Eraser', size: 30, color: 'transparent', opacity: 1, blendMode: 'destination-out' as GlobalCompositeOperation },
+      { id: 'multiply', name: 'Multiply', size: 20, color: '#666666', opacity: 0.6, blendMode: 'multiply' as GlobalCompositeOperation },
+      { id: 'screen', name: 'Screen', size: 25, color: '#ffffff', opacity: 0.6, blendMode: 'screen' as GlobalCompositeOperation }
     ];
     setBrushPresets(presets);
   }, []);
