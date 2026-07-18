@@ -9,7 +9,7 @@ import io
 import base64
 from PIL import Image
 import logging
-from ..middleware.security import SecurityMiddleware
+from middleware.security import SecurityMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -21,26 +21,26 @@ security_middleware = SecurityMiddleware()
 # Request/Response models
 class LayerAdjustmentRequest(BaseModel):
     layer_id: str
-    adjustment_type: str = Field(..., regex="^brightness|contrast|saturation|hue|levels|curves$")
+    adjustment_type: str = Field(..., pattern="^brightness|contrast|saturation|hue|levels|curves$")
     value: float = Field(..., ge=-100, le=100)
     enabled: bool = True
     opacity: float = Field(1.0, ge=0, le=1)
 
 class LayerMaskRequest(BaseModel):
     layer_id: str
-    mask_type: str = Field(..., regex="^alpha|grayscale|custom$")
+    mask_type: str = Field(..., pattern="^alpha|grayscale|custom$")
     intensity: float = Field(1.0, ge=0, le=1)
     feather: float = Field(0, ge=0, le=100)
     mask_data: Optional[Dict[str, Any]] = None
 
 class LayerBlendRequest(BaseModel):
     layer_ids: List[str]
-    blend_mode: str = Field(..., regex="^multiply|screen|overlay|soft-light|hard-light|difference|exclusion$")
+    blend_mode: str = Field(..., pattern="^multiply|screen|overlay|soft-light|hard-light|difference|exclusion$")
     opacity: float = Field(1.0, ge=0, le=1)
 
 class BatchProcessingRequest(BaseModel):
     operations: List[Dict[str, Any]]
-    format: str = Field("png", regex="^png|jpeg|tiff|webp$")
+    format: str = Field("png", pattern="^png|jpeg|tiff|webp$")
     quality: int = Field(90, ge=1, le=100)
 
 class LayerHistoryRequest(BaseModel):

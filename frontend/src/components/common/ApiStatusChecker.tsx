@@ -14,7 +14,7 @@ export const ApiStatusChecker: React.FC = () => {
     setLastCheck(new Date());
 
     try {
-      const response = await fetch('http://127.0.0.1:8001/api/health');
+      const response = await fetch('http://localhost:8000/api/health');
       if (response.ok) {
         setHealthStatus('ok');
       } else {

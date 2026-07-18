@@ -12,14 +12,31 @@ export const StudioToggle: React.FC<StudioControlProps> = ({ label, yMap, stateK
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
-    if (!yMap) return;
+    if (!yMap || typeof yMap.observe !== 'function') return;
+    
     const update = () => {
-      const val = yMap.get(stateKey);
-      if (typeof val === 'boolean') setEnabled(val);
+      try {
+        const val = yMap.get(stateKey);
+        if (typeof val === 'boolean') setEnabled(val);
+      } catch (error) {
+        console.warn(`Error updating StudioToggle for ${stateKey}:`, error);
+      }
     };
-    yMap.observe(update);
-    update();
-    return () => yMap.unobserve(update);
+    
+    try {
+      yMap.observe(update);
+      update();
+    } catch (error) {
+      console.warn(`Error setting up StudioToggle observer for ${stateKey}:`, error);
+    }
+    
+    return () => {
+      try {
+        yMap.unobserve(update);
+      } catch (error) {
+        console.warn(`Error unobserving StudioToggle for ${stateKey}:`, error);
+      }
+    };
   }, [yMap, stateKey]);
 
   const toggle = () => {

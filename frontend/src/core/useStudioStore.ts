@@ -62,7 +62,7 @@ const notify = () => listeners.forEach(l => l());
 
 const startConnection = () => {
   if (provider) return;
-  const wsUrl = (import.meta.env.VITE_WS_URL as string) || `ws://${window.location.host}/ws`;
+  const wsUrl = (import.meta.env.VITE_WS_URL as string) || `ws://localhost:8000/ws`;
   provider = new WebsocketProvider(wsUrl, 'studio-project', yDoc);
   const name = `User ${Math.floor(Math.random() * 1000)}`;
   const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;

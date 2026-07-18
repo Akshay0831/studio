@@ -1,6 +1,6 @@
 # Phase 2: Production Polish - CI/CD Pipeline
 
-name: Unified Editing Studio CI/CD Pipeline
+name: Artifex Studio CI/CD Pipeline
 
 on:
   push:
