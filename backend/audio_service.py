@@ -2,39 +2,22 @@ import logging
 import asyncio
 from typing import Dict, Optional, Any, Callable, List
 
-from config import settings
+from config.config import Settings
+settings = Settings()
 from inference_dispatcher import dispatcher
 from utils.telemetry import trace_performance
 from utils.cache import generation_cache
 from utils.encoding import audio_to_base64
 from ai_models.audio_model import get_audio_model
 
-# Try to import AudioLayerEngine for advanced features
-try:
-    from audiolayer.engine import CompositionOrchestrator
-    from audiolayer.config import MusicGenerationConfig
-    _AUDIO_LAYER_AVAILABLE = True
-    logging.info("AudioLayerEngine available - using real implementation")
-except ImportError:
-    logging.warning("AudioLayerEngine not available - using mock implementation")
-    _AUDIO_LAYER_AVAILABLE = False
-    
-    # Simple mock implementation
-    class MusicGenerationConfig:
-        def __init__(self):
-            self.bpm = 120
-            self.key = "C"
-            self.scale = "major"
-            self.mood = "Neutral"
-            self.bars = 4
-            
-    class CompositionOrchestrator:
-        def __init__(self, *args, **kwargs): pass
-        def ComposeBatch(self, seeds): 
-            return {s: type('Result', (), {'__dict__': {'status': 'completed', 'output_url': f'/output/audio/composition_seed_{s:06d}.mid'}}) for s in seeds}
-        def PauseStream(self, *args): return True
-        def ResumeStream(self, *args): return True
-        def SubmitFeedback(self, *args): return True
+# Audio generation configuration
+class MusicGenerationConfig:
+    def __init__(self):
+        self.bpm = 120
+        self.key = "C"
+        self.scale = "major"
+        self.mood = "Neutral"
+        self.bars = 4
 
 from utils.base_service import BaseStudioService
 
@@ -47,12 +30,12 @@ class AudioService(BaseStudioService):
         self.audio_model = get_audio_model()
 
     def _ensure_orchestrator(self, audio_config: Dict[str, Any]):
-        """Initializes the orchestrator lazily."""
-        if not self.orchestrator:
-            orchestration_config = MusicGenerationConfig()
-            orchestration_config.bpm = audio_config.get("bpm", orchestration_config.bpm)
-            orchestration_config.key = audio_config.get("key", orchestration_config.key)
-            orchestration_config.scale = audio_config.get("scale", orchestration_config.scale)
+        """Initializes the configuration lazily."""
+        if not hasattr(self, 'music_config') or self.music_config is None:
+            self.music_config = MusicGenerationConfig()
+            self.music_config.bpm = audio_config.get("bpm", self.music_config.bpm)
+            self.music_config.key = audio_config.get("key", self.music_config.key)
+            self.music_config.scale = audio_config.get("scale", self.music_config.scale)
             
             # Composer engine selection
             composer = audio_config.get("composer", "standard")

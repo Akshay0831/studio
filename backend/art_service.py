@@ -2,7 +2,8 @@ import logging
 import torch
 from typing import Dict, Optional, Any, Callable, List
 
-from config import settings
+from config.config import Settings
+settings = Settings()
 from inference_dispatcher import dispatcher
 from utils.telemetry import trace_performance
 from utils.cache import generation_cache
@@ -21,7 +22,7 @@ class FeedbackIntegration:
     def GetAverageScore(self, *args): return 0.0
 
 from utils.batch_processor import batch_processor
-
+from utils.timeout import async_with_timeout
 from utils.base_service import BaseStudioService
 
 logger = logging.getLogger("studio.backend.art_service")
@@ -75,6 +76,13 @@ class ArtService(BaseStudioService):
 
         logger.info(f"Generating image | Prompt: {prompt[:50]}... | Seed: {seed}")
         
+        # API key selection and routing
+        from config.api_key_manager import api_key_manager
+        current_profile = api_key_manager.get_current_profile()
+        
+        if not current_profile:
+            return {"error": "No active API profile selected"}
+        
         routing = await self.route_and_execute("generate_image", {"prompt": prompt, "seed": seed})
         
         if routing["backend"] == "local_gpu":
@@ -89,6 +97,17 @@ class ArtService(BaseStudioService):
             if result and "error" not in result:
                 generation_cache.set(prompt, seed, gen_config, result)
             return result
+        elif routing["backend"] == "api":
+            # Use API key for external AI service
+            api_config = {
+                "prompt": prompt,
+                "seed": seed,
+                "gen_config": gen_config,
+                "api_key": current_profile.api_key,
+                "api_type": current_profile.api_type,
+                "model": gen_config.get("model", current_profile.default_model)
+            }
+            return await self._generate_api(api_config, stream_callback)
         else:
             return {"error": "Non-local GPU generation not yet optimized in service layer", "routing": routing}
 
@@ -115,12 +134,29 @@ class ArtService(BaseStudioService):
 
         logger.info(f"Inpainting image | Prompt: {prompt[:50]}... | Seed: {seed}")
         
+        # API key selection and routing
+        from config.api_key_manager import api_key_manager
+        current_profile = api_key_manager.get_current_profile()
+        
+        if not current_profile:
+            return {"error": "No active API profile selected"}
+        
         routing = await self.route_and_execute("inpaint_image", {"prompt": prompt, "seed": seed})
         
         if routing["backend"] == "local_gpu":
             result = await self._inpaint_local(base_image_b64, mask_image_b64, prompt, seed, gen_config, stream_callback)
             generation_cache.set(prompt, seed, inpaint_config, result)
             return result
+        elif routing["backend"] == "api":
+            # Use API key for external AI service
+            api_config = {
+                "prompt": prompt,
+                "seed": seed,
+                "gen_config": gen_config,
+                "api_key": current_profile.api_key,
+                "api_type": current_profile.api_type
+            }
+            return await self._inpaint_api(api_config, stream_callback)
         else:
             return {"error": "Fallback inpainting not implemented", "backend": routing["backend"]}
 
@@ -217,9 +253,12 @@ class ArtService(BaseStudioService):
                     callback_on_step_end=callback_on_step_end if stream_callback else None
                 )
 
-        import asyncio
-        generation_output = await asyncio.to_thread(run_inference)
-            
+        generation_output = await async_with_timeout(
+            asyncio.to_thread(run_inference),
+            timeout_seconds=settings.BATCH_INFERENCE_TIMEOUT,
+            timeout_error=f"Batch generation timeout after {settings.BATCH_INFERENCE_TIMEOUT} seconds"
+        )
+
         results = []
         for i, image in enumerate(generation_output.images):
             results.append({
@@ -267,9 +306,12 @@ class ArtService(BaseStudioService):
                     callback_on_step_end=callback_on_step_end if stream_callback else None
                 )
 
-        import asyncio
-        generation_output = await asyncio.to_thread(run_inference)
-            
+        generation_output = await async_with_timeout(
+            asyncio.to_thread(run_inference),
+            timeout_seconds=settings.INFERENCE_TIMEOUT,
+            timeout_error=f"Image generation timeout after {settings.INFERENCE_TIMEOUT} seconds"
+        )
+
         final_image = generation_output.images[0]
         return {
             "image_base64": pil_to_base64(final_image),
@@ -332,9 +374,12 @@ class ArtService(BaseStudioService):
                         callback_on_step_end=callback_on_step_end if stream_callback else None
                     )
 
-        import asyncio
-        generation_output = await asyncio.to_thread(run_inference)
-            
+        generation_output = await async_with_timeout(
+            asyncio.to_thread(run_inference),
+            timeout_seconds=settings.INFERENCE_TIMEOUT,
+            timeout_error=f"Inpainting timeout after {settings.INFERENCE_TIMEOUT} seconds"
+        )
+
         final_image = generation_output.images[0]
         return {
             "image_base64": pil_to_base64(final_image),
@@ -345,6 +390,208 @@ class ArtService(BaseStudioService):
     async def _generate_cpu(self, prompt: str, seed: int, gen_config: Dict[str, Any]) -> Dict[str, Any]:
         """CPU generation logic."""
         return {"error": "CPU fallback not yet optimized", "backend": "cpu"}
+
+    async def _generate_api(self, config: Dict[str, Any], stream_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """API-based image generation using external AI services."""
+        import requests
+        import time
+        
+        api_type = config.get("api_type")
+        api_key = config.get("api_key")
+        prompt = config.get("prompt")
+        seed = config.get("seed")
+        gen_config = config.get("gen_config", {})
+        model = config.get("model")
+        
+        logger.info(f"API generation | Type: {api_type} | Model: {model} | Prompt: {prompt[:50]}...")
+        
+        try:
+            if api_type == "replicate":
+                result = await self._generate_replicate(prompt, seed, gen_config, model, stream_callback)
+            elif api_type == "runpod":
+                result = await self._generate_runpod(prompt, seed, gen_config, model, stream_callback)
+            elif api_type == "openai":
+                result = await self._generate_openai(prompt, seed, gen_config, model, stream_callback)
+            else:
+                return {"error": f"Unsupported API type: {api_type}"}
+            
+            if result and "error" not in result:
+                generation_cache.set(prompt, seed, gen_config, result)
+            return result
+            
+        except Exception as e:
+            logger.error(f"API generation failed: {str(e)}")
+            return {"error": f"API generation failed: {str(e)}"}
+
+    async def _generate_replicate(self, prompt: str, seed: int, gen_config: Dict[str, Any], model: str, stream_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """Replicate API-based image generation."""
+        import requests
+        import json
+        
+        try:
+            headers = {
+                "Authorization": f"Token {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "input": {
+                    "prompt": gen_config.get("default_prompt", "") + prompt,
+                    "negative_prompt": gen_config.get("negative_prompt", ""),
+                    "num_inference_steps": gen_config.get("steps", 30),
+                    "guidance_scale": gen_config.get("cfg", 7.5),
+                    "width": int(gen_config.get("size", "1024x1024").split("x")[0]),
+                    "height": int(gen_config.get("size", "1024x1024").split("x")[1])
+                },
+                "version": f"{model}-latest"
+            }
+            
+            response = requests.post(
+                "https://api.replicate.com/v1/predictions",
+                headers=headers,
+                json=data,
+                timeout=300
+            )
+            
+            if response.status_code != 201:
+                return {"error": f"Replicate API error: {response.status_code} - {response.text}"}
+            
+            prediction = response.json()
+            prediction_url = prediction.get("urls", {}).get("get", "")
+            
+            # Poll for completion
+            while True:
+                status_response = requests.get(prediction_url, headers=headers, timeout=300)
+                status = status_response.json()
+                
+                if status.get("status") == "succeeded":
+                    # Extract image URL
+                    output_url = status.get("output", [])
+                    if output_url:
+                        image_response = requests.get(output_url[0], timeout=300)
+                        return {
+                            "image_base64": image_response.content.decode('utf-8') if image_response.text.startswith('data:image/') else f"data:image/png;base64,{image_response.content.decode('base64')}",
+                            "seed": seed,
+                            "backend": "api"
+                        }
+                
+                elif status.get("status") == "failed":
+                    return {"error": f"Replicate generation failed: {status.get('error', 'Unknown error')}"}
+                
+                # Progress reporting
+                progress = status.get("logs", [""])
+                if progress and stream_callback:
+                    await stream_callback({"progress": 50, "status": "processing", "message": progress[-1]})
+                
+                time.sleep(2)
+                
+        except Exception as e:
+            logger.error(f"Replicate API generation failed: {str(e)}")
+            return {"error": f"Replicate API generation failed: {str(e)}"}
+
+    async def _generate_runpod(self, prompt: str, seed: int, gen_config: Dict[str, Any], model: str, stream_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """RunPod API-based image generation."""
+        import requests
+        import json
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "input": {
+                    "prompt": prompt,
+                    "negative_prompt": gen_config.get("negative_prompt", ""),
+                    "steps": gen_config.get("steps", 30),
+                    "guidance_scale": gen_config.get("cfg", 7.5),
+                    "width": int(gen_config.get("size", "1024x1024").split("x")[0]),
+                    "height": int(gen_config.get("size", "1024x1024").split("x")[1]),
+                    "seed": seed
+                },
+                "model": model
+            }
+            
+            response = requests.post(
+                "https://api.runpod.ai/v2/runpod-worker-stream/predict",
+                headers=headers,
+                json=data,
+                timeout=300
+            )
+            
+            if response.status_code != 200:
+                return {"error": f"RunPod API error: {response.status_code} - {response.text}"}
+            
+            result = response.json()
+            output_url = result.get("output", {}).get("url")
+            
+            if output_url:
+                image_response = requests.get(output_url, timeout=300)
+                return {
+                    "image_base64": image_response.content.decode('utf-8') if image_response.text.startswith('data:image/') else f"data:image/png;base64,{image_response.content.decode('base64')}",
+                    "seed": seed,
+                    "backend": "api"
+                }
+            
+            return {"error": "RunPod generation failed: No output URL returned"}
+            
+        except Exception as e:
+            logger.error(f"RunPod API generation failed: {str(e)}")
+            return {"error": f"RunPod API generation failed: {str(e)}"}
+
+    async def _generate_openai(self, prompt: str, seed: int, gen_config: Dict[str, Any], model: str, stream_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """OpenAI API-based image generation."""
+        import requests
+        import json
+        
+        try:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            data = {
+                "prompt": prompt,
+                "n": 1,
+                "size": gen_config.get("size", "1024x1024"),
+                "quality": gen_config.get("quality", "standard"),
+                "seed": seed
+            }
+            
+            response = requests.post(
+                "https://api.openai.com/v1/images/generations",
+                headers=headers,
+                json=data,
+                timeout=300
+            )
+            
+            if response.status_code != 200:
+                return {"error": f"OpenAI API error: {response.status_code} - {response.text}"}
+            
+            result = response.json()
+            image_data = result.get("data", [])[0]
+            image_url = image_data.get("url")
+            
+            if image_url:
+                image_response = requests.get(image_url, timeout=300)
+                return {
+                    "image_base64": image_response.content.decode('utf-8') if image_response.text.startswith('data:image/') else f"data:image/png;base64,{image_response.content.decode('base64')}",
+                    "seed": seed,
+                    "backend": "api"
+                }
+            
+            return {"error": "OpenAI generation failed: No image URL returned"}
+            
+        except Exception as e:
+            logger.error(f"OpenAI API generation failed: {str(e)}")
+            return {"error": f"OpenAI API generation failed: {str(e)}"}
+
+    async def _inpaint_api(self, config: Dict[str, Any], stream_callback: Optional[Callable] = None) -> Dict[str, Any]:
+        """API-based image inpainting using external AI services."""
+        # Similar implementation to _generate_api but for inpainting
+        # This would use the appropriate API's inpainting endpoint
+        return {"error": "API inpainting not yet implemented"}
 
     async def submit_feedback(self, seed: int, feedback_type: str, score: int) -> Dict[str, Any]:
         """Record human feedback for quality tracking."""

@@ -5,7 +5,8 @@ import json
 import os
 import time
 from pathlib import Path
-from config import settings
+from config.config import Settings
+settings = Settings()
 from project_service import project_service
 from art_service import art_service
 from audio_service import audio_service
@@ -81,7 +82,7 @@ async def create_project(request: ProjectRequest):
         projects_db[project_id] = project
         
         # Create project directory
-        project_dir = Path(settings.STUDIO_OUTPUT_PATH) / "projects" / project_id
+        project_dir = Path(settings.PROJECTS_PATH) / project_id
         project_dir.mkdir(parents=True, exist_ok=True)
         
         return project
@@ -120,7 +121,7 @@ async def delete_project(project_id: str):
     del projects_db[project_id]
     
     # Remove project directory
-    project_dir = Path(settings.STUDIO_OUTPUT_PATH) / "projects" / project_id
+    project_dir = Path(settings.PROJECTS_PATH) / project_id
     if project_dir.exists():
         import shutil
         shutil.rmtree(project_dir)
@@ -141,8 +142,8 @@ async def export_project(
         timestamp = int(time.time())
         
         # Get all generated assets for this project
-        project_dir = Path(settings.STUDIO_OUTPUT_PATH) / "projects" / project_id
-        export_path = Path(settings.STUDIO_OUTPUT_PATH) / "exports" / f"{project_id}_export_{timestamp}"
+        project_dir = Path(settings.PROJECTS_PATH) / project_id
+        export_path = Path(settings.OUTPUT_PATH) / "exports" / f"{project_id}_export_{timestamp}"
         
         if export_request.format.lower() == "zip":
             # Create ZIP archive

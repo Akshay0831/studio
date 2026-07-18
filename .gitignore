@@ -173,6 +173,7 @@ Thumbs.db
 .idea/
 *.sublime-project
 *.sublime-workspace
+local-tools/
 
 # Database files
 *.db

@@ -14,6 +14,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create data directories
+RUN mkdir -p /app/data/projects /app/data/config /app/data/output /app/data/models
+
 # Copy backend code
 COPY . .
 

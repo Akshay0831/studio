@@ -1,0 +1,17 @@
+{
+  "current_profile": "perf_5",
+  "profiles": {
+    "perf_5": {
+      "name": "perf_5",
+      "api_key": "key_4",
+      "api_type": "replicate",
+      "is_active": true,
+      "models": [],
+      "default_model": null,
+      "rate_limit": 100,
+      "usage_count": 0,
+      "last_used": null,
+      "created_at": "0"
+    }
+  }
+}

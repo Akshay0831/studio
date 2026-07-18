@@ -1,0 +1,14 @@
+{
+  "id": "33e5c24b-5523-4fb6-9307-14b4996915ba",
+  "name": "Cyberpunk Style",
+  "description": "Cyberpunk art style template",
+  "config": {
+    "style": "cyberpunk",
+    "colors": [
+      "neon",
+      "dark"
+    ],
+    "quality": "high"
+  },
+  "created_at": 1784370410.882812
+}

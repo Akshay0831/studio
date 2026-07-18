@@ -4,8 +4,10 @@ from fastapi.responses import FileResponse
 from starlette.requests import Request
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
-from config import settings
-from routes import art, audio, enhanced, backup, scaling, config
+from config.config import Settings
+settings = Settings()
+from routes import art, audio, backup, scaling, config, api_management_router, projects_router, exports_router, templates_router
+from routes.generation import generation_router
 from api.image_processing import router as image_processing_router
 from inference_dispatcher import dispatcher
 from websocket_handler import websocket_endpoint, manager
@@ -19,12 +21,10 @@ from utils.monitoring import (
 )
 from utils.error_handling import (
     custom_exception_handler,
-    validation_exception_handler,
-    pydantic_exception_handler,
-    general_error_middleware
+    create_error_response
 )
 from utils.rate_limiter import rate_limit_middleware
-from utils.monitoring import LoggingMiddleware, health_monitor
+from utils.monitoring import LoggingMiddleware, health_monitor, REQUESTS_CACHE
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import time
@@ -43,8 +43,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("studio.backend.app")
 
-import logging
-
 app = FastAPI(
     title="Unified Editing Studio API",
     description="Interactive backend for real-time sprite and music generation",
@@ -59,8 +57,6 @@ app.add_middleware(LoggingMiddleware)
 
 # Add global error handler
 app.add_exception_handler(Exception, custom_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(ValidationError, pydantic_exception_handler)
 
 # CORS Configuration
 app.add_middleware(
@@ -94,17 +90,21 @@ async def startup_event():
 
 app.include_router(art.router, prefix="/api")
 app.include_router(audio.router, prefix="/api")
-app.include_router(enhanced.router, prefix="/api")
 app.include_router(backup.router, prefix="/api")
 app.include_router(scaling.router, prefix="/api")
 app.include_router(config.router, prefix="/api")
+app.include_router(api_management_router, prefix="/api")
+app.include_router(generation_router, prefix="/api")
 app.include_router(image_processing_router, prefix="/api")
+app.include_router(projects_router, prefix="/api")
+app.include_router(exports_router, prefix="/api")
+app.include_router(templates_router, prefix="/api")
 
 
 
 # Ensure output directory exists
-os.makedirs(settings.STUDIO_OUTPUT_PATH, exist_ok=True)
-app.mount("/output", StaticFiles(directory=settings.STUDIO_OUTPUT_PATH), name="output")
+os.makedirs(settings.OUTPUT_PATH, exist_ok=True)
+app.mount("/output", StaticFiles(directory=settings.OUTPUT_PATH), name="output")
 
 STUDIO_ROOT = Path(__file__).resolve().parent.parent
 FRONTEND_DIST = STUDIO_ROOT / "frontend" / "dist"

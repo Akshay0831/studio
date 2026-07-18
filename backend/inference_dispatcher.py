@@ -2,7 +2,8 @@ import torch
 import os
 import logging
 from typing import Optional, Any, Dict, Callable, List
-from config import settings
+from config.config import Settings
+settings = Settings()
 from utils.gpu import get_vram_info
 
 from utils.batch_processor import batch_processor

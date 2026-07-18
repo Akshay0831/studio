@@ -1,18 +1,20 @@
 import time
-from typing import Dict, Any, Optional
+import threading
+from typing import Dict, Any, Optional, Tuple
 from fastapi import Request, HTTPException, status
 from fastapi.responses import JSONResponse
 
-# In-memory rate limiter (for production, use Redis or database)
+# Global rate limiter instance
 class RateLimiter:
     """Rate limiter using sliding window algorithm."""
 
-    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
-        self.max_requests = max_requests
-        self.window_seconds = window_seconds
+    def __init__(self):
         self.requests: Dict[str, list[float]] = {}
+        self.lock = threading.Lock()
+        self.cleanup_interval = 300  # 5 minutes
+        self.last_cleanup = time.time()
 
-    def is_allowed(self, key: str) -> tuple[bool, int]:
+    def is_allowed(self, key: str, max_requests: int = 100, window_seconds: int = 60) -> tuple[bool, int]:
         """
         Check if a request is allowed.
 
@@ -20,26 +22,32 @@ class RateLimiter:
             tuple[is_allowed, remaining_requests]
         """
         now = time.time()
-        window_start = now - self.window_seconds
+        window_start = now - window_seconds
 
-        # Remove expired requests
-        if key in self.requests:
-            self.requests[key] = [
-                t for t in self.requests[key]
-                if t > window_start
-            ]
+        # Clean up old requests periodically
+        if now - self.last_cleanup > self.cleanup_interval:
+            self._cleanup_old_requests()
+            self.last_cleanup = now
 
-        # Check if limit exceeded
-        if len(self.requests[key]) >= self.max_requests:
-            return False, 0
+        with self.lock:
+            # Remove expired requests
+            if key in self.requests:
+                self.requests[key] = [
+                    t for t in self.requests[key]
+                    if t > window_start
+                ]
 
-        # Add current request
-        self.requests[key].append(now)
+            # Check if limit exceeded
+            if len(self.requests[key]) >= max_requests:
+                return False, 0
 
-        # Calculate remaining requests
-        remaining = self.max_requests - len(self.requests[key])
+            # Add current request
+            self.requests[key].append(now)
 
-        return True, remaining
+            # Calculate remaining requests
+            remaining = max_requests - len(self.requests[key])
+
+            return True, remaining
 
     def get_reset_time(self, key: str) -> int:
         """Get the timestamp when the rate limit will be reset."""
@@ -47,18 +55,59 @@ class RateLimiter:
             return int(time.time())
 
         oldest_request = min(self.requests[key])
-        return int(oldest_request + self.window_seconds)
+        return int(oldest_request + 60)  # Assuming 60-second window
+
+    def get_usage_stats(self, key: str) -> Dict:
+        """Get current usage statistics for a key."""
+        now = time.time()
+        
+        with self.lock:
+            if key not in self.requests:
+                return {
+                    "requests_per_minute": 0,
+                    "total_requests": 0,
+                    "last_request": None
+                }
+            
+            # Count requests in the last minute
+            cutoff_time = now - 60
+            recent_requests = [t for t in self.requests[key] if t > cutoff_time]
+            
+            return {
+                "requests_per_minute": len(recent_requests),
+                "total_requests": len(self.requests[key]),
+                "last_request": max(self.requests[key]) if self.requests[key] else None,
+                "reset_time": self.get_reset_time(key)
+            }
+
+    def _cleanup_old_requests(self):
+        """Clean up old requests older than 1 hour"""
+        now = time.time()
+        cutoff_time = now - 3600  # 1 hour
+
+        for key in list(self.requests.keys()):
+            self.requests[key] = [
+                t for t in self.requests[key]
+                if t > cutoff_time
+            ]
+            
+            # Remove empty lists
+            if not self.requests[key]:
+                del self.requests[key]
 
     def clear_key(self, key: str):
         """Clear all requests for a specific key (for testing)."""
         if key in self.requests:
             del self.requests[key]
 
+# Global instance
+rate_limiter = RateLimiter()
+
 
 # Create rate limiter instances for different endpoints
 # These limits can be adjusted as needed
-API_RATE_LIMITER = RateLimiter(max_requests=100, window_seconds=60)
-WEBSOCKET_RATE_LIMITER = RateLimiter(max_requests=20, window_seconds=60)
+API_RATE_LIMITER = RateLimiter()
+WEBSOCKET_RATE_LIMITER = RateLimiter()
 
 
 async def rate_limit_middleware(request: Request, call_next):

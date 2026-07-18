@@ -14,7 +14,7 @@ class ModelType(Enum):
     
     @property
     def value(self) -> str:
-        """Return the string value (compatibility with artsynthesis)"""
+        """Return the string value"""
         return self._value_
 
 class QuantizationType(Enum):
@@ -25,7 +25,7 @@ class QuantizationType(Enum):
     
     @property
     def value(self) -> str:
-        """Return the string value (compatibility with artsynthesis)"""
+        """Return the string value"""
         return self._value_
 
 # Convenience mappings

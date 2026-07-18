@@ -43,9 +43,23 @@ class DependencyManager:
             return getattr(module, attr_name)
         return fallback
 
-# Centralized access points
-def get_art_engine():
-    return DependencyManager.get_module("artsynthesis")
+# Authentication and user management
+def get_current_user():
+    """Placeholder for authentication - in production, implement proper JWT or OAuth"""
+    # This should be replaced with actual authentication logic
+    return {"user_id": "demo_user", "username": "demo", "email": "demo@example.com"}
 
-def get_audio_engine():
-    return DependencyManager.get_module("audiolayer")
+def get_auth_service():
+    """Get authentication service"""
+    return DependencyManager.get_module("auth_service")
+
+def get_user_service():
+    """Get user service"""
+    return DependencyManager.get_module("user_service")
+
+# Centralized access points
+def get_audio_model():
+    return DependencyManager.get_module("audio_model")
+
+def get_image_model():
+    return DependencyManager.get_module("image_model")

@@ -100,7 +100,7 @@ def get_device_utils() -> DeviceUtils:
     return _device_utils
 
 def get_device() -> str:
-    """Get current device (legacy compatibility)"""
+    """Get current device"""
     return get_device_utils().get_device()
 
 if __name__ == "__main__":

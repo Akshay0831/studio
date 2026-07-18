@@ -1,0 +1,14 @@
+{
+  "id": "9ce84610-e5d0-484f-88de-65f977b7ee2c",
+  "name": "Fantasy Style",
+  "description": "Fantasy art style template",
+  "config": {
+    "style": "fantasy",
+    "colors": [
+      "vibrant",
+      "magical"
+    ],
+    "quality": "ultra"
+  },
+  "created_at": 1784370819.1040654
+}

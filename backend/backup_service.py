@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 from utils.base_service import BaseStudioService
 from utils.telemetry import trace_performance
-from config import settings
+from config.config import Settings
+settings = Settings()
 
 logger = logging.getLogger("studio.backend.backup_service")
 
@@ -187,7 +188,7 @@ class BackupService(BaseStudioService):
                 studio_root = Path(settings.STUDIO_ROOT)
                 
                 # Backup key directories
-                for directory in ["projects", "config", "resources", "studio_output"]:
+                for directory in ["projects", "config", "output", "models"]:
                     dir_path = studio_root / directory
                     if dir_path.exists():
                         for root, dirs, files in os.walk(dir_path):

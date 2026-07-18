@@ -6,7 +6,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./studio_output:/app/studio_output
+      - ./data:/app/data
     environment:
       - SERVER_HOST=0.0.0.0
       - SERVER_PORT=8000

@@ -32,7 +32,7 @@ def get_device_utils():  # Forward reference to DeviceUtils
     return _device_utils
 
 def get_device() -> str:
-    """Get current device (legacy compatibility)"""
+    """Get current device"""
     return get_device_utils().get_device()
 
 def get_model_manager():  # Forward reference to ModelManager
