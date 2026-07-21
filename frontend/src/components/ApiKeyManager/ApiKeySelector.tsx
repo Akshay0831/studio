@@ -1,12 +1,10 @@
 import React, { useMemo } from 'react'
 import { useApiKey } from './ApiKeyContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Badge } from '../ui/badge'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Alert, AlertDescription } from '../ui/alert'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/themed'
+import { Badge } from '@/components/ui/themed'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/themed'
+import { Alert, AlertDescription } from '@/components/ui/themed'
 import { CheckCircle, AlertCircle, Zap, RefreshCw } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip'
 
 export const ApiKeySelector: React.FC = () => {
   const { state, setCurrentProfile } = useApiKey()
@@ -144,24 +142,16 @@ export const ApiKeySelector: React.FC = () => {
                       <label className="text-sm font-medium">Available Models</label>
                       <div className="flex flex-wrap gap-2">
                         {selectedProfile.models.map(modelId => (
-                          <TooltipProvider key={modelId}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Badge
-                                  variant={modelId === selectedProfile.default_model ? "default" : "secondary"}
-                                  className="cursor-pointer hover:bg-gray-200"
-                                >
-                                  {modelId}
-                                  {modelId === selectedProfile.default_model && (
-                                    <span className="ml-1">🌟</span>
-                                  )}
-                                </Badge>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p className="text-sm">Click to use this model for generation</p>
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <Badge
+                            key={modelId}
+                            variant={modelId === selectedProfile.default_model ? "default" : "secondary"}
+                            className="cursor-pointer hover:bg-gray-200"
+                          >
+                            {modelId}
+                            {modelId === selectedProfile.default_model && (
+                              <span className="ml-1">🌟</span>
+                            )}
+                          </Badge>
                         ))}
                       </div>
                     </div>

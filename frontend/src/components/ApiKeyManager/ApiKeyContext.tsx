@@ -2,6 +2,14 @@ import React, { createContext, useContext, useReducer, useEffect, ReactNode } fr
 import { ApiProfile, ApiKeyState } from '../../types/api'
 import { ApiErrorHandler } from '../../utils/apiErrorHandler'
 
+// Extended Error type with API response
+interface ApiError extends Error {
+  response?: {
+    status: number;
+    data?: any;
+  };
+}
+
 interface ApiKeyContextType {
   state: ApiKeyState
   dispatch: React.Dispatch<ApiKeyAction>
@@ -22,8 +30,6 @@ type ApiKeyAction =
   | { type: 'DELETE_PROFILE'; payload: string }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-
-const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined)
 
 const initialState: ApiKeyState = {
   profiles: {},
@@ -68,13 +74,14 @@ function apiKeyReducer(state: ApiKeyState, action: ApiKeyAction): ApiKeyState {
           }
         }
       }
-    case 'DELETE_PROFILE':
-      const { [action.payload]: deleted, ...remaining } = state.profiles
+    case 'DELETE_PROFILE': {
+      delete state.profiles[action.payload]
       return {
         ...state,
-        profiles: remaining,
+        profiles: { ...state.profiles },
         currentProfile: state.currentProfile === action.payload ? null : state.currentProfile
       }
+    }
     case 'SET_LOADING':
       return {
         ...state,
@@ -111,7 +118,7 @@ export const ApiKeyProvider: React.FC<ApiKeyProviderProps> = ({ children }) => {
         const data = await response.json()
         dispatch({ type: 'SET_PROFILES', payload: data.profiles })
       } else {
-        const error = new Error('Failed to load API profiles')
+        const error = new Error('Failed to load API profiles') as ApiError
         error.response = { status: response.status }
         dispatch({ type: 'SET_ERROR', payload: ApiErrorHandler.handleError(error) })
       }
@@ -139,7 +146,7 @@ export const ApiKeyProvider: React.FC<ApiKeyProviderProps> = ({ children }) => {
         dispatch({ type: 'ADD_PROFILE', payload: newProfile })
         return newProfile
       } else {
-        const error = new Error('Failed to create profile')
+        const error = new Error('Failed to create profile') as ApiError
         error.response = { status: response.status }
         const errorData = await response.json().catch(() => ({}))
         error.response = { status: response.status, data: errorData }
@@ -167,7 +174,7 @@ export const ApiKeyProvider: React.FC<ApiKeyProviderProps> = ({ children }) => {
         dispatch({ type: 'UPDATE_PROFILE', payload: { id: profileId, updates } })
         return updatedProfile
       } else {
-        const error = new Error('Failed to update profile')
+        const error = new Error('Failed to update profile') as ApiError
         error.response = { status: response.status }
         const errorData = await response.json().catch(() => ({}))
         error.response = { status: response.status, data: errorData }
@@ -189,7 +196,7 @@ export const ApiKeyProvider: React.FC<ApiKeyProviderProps> = ({ children }) => {
       if (response.ok) {
         dispatch({ type: 'DELETE_PROFILE', payload: profileId })
       } else {
-        const error = new Error('Failed to delete profile')
+        const error = new Error('Failed to delete profile') as ApiError
         error.response = { status: response.status }
         const errorData = await response.json().catch(() => ({}))
         error.response = { status: response.status, data: errorData }
@@ -221,6 +228,7 @@ export const ApiKeyProvider: React.FC<ApiKeyProviderProps> = ({ children }) => {
   )
 }
 
+export const ApiKeyContext = createContext<ApiKeyContextType | undefined>(undefined)
 export const useApiKey = () => {
   const context = useContext(ApiKeyContext)
   if (context === undefined) {

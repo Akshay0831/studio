@@ -13,6 +13,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "react",
     "esModuleInterop": true,
     "moduleDetection": "force",
 
@@ -21,13 +22,22 @@
       "@/*": ["./src/*"],
       "@/components/*": ["./src/components/*"],
       "@/lib/*": ["./src/lib/*"],
-      "@/i18n/*": ["./src/i18n/*"]
+      "@/i18n/*": ["./src/i18n/*"],
+      "@/types/*": ["./src/types/*"]
     },
 
     /* Linting */
     "strict": true,
     "noUnusedLocals": false,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./node_modules/@types/react",
+      "./node_modules/@types/node",
+      "./node_modules/@types/react-dom"
+    ],
+    "types": ["node"],
     "noUnusedParameters": false,
+    "allowJs": true,
     "noFallthroughCasesInSwitch": true
   },
   "include": ["src"],

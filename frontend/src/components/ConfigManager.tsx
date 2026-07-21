@@ -7,13 +7,9 @@ import {
   RefreshCw,
   AlertTriangle,
   CheckCircle,
-  Globe,
-  Database,
   Server,
   Monitor,
   Palette,
-  Volume2,
-  Zap,
   Shield,
   Database as DatabaseIcon
 } from 'lucide-react';
@@ -80,21 +76,14 @@ interface ConfigData {
   };
 }
 
-interface ConfigSample {
-  template: string;
-  name: string;
-  description: string;
-  content: any;
-}
-
 const ConfigManager: React.FC = () => {
   const { t } = useTranslation();
   const [config, setConfig] = useState<ConfigData | null>(null);
-  const [selectedEnv, setSelectedEnv] = useState<string>('');
   const [editing, setEditing] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedEnv, setSelectedEnv] = useState('');
 
   const fetchData = async () => {
     try {
@@ -315,7 +304,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="text"
                   value={config.current.settings.database.host}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -324,7 +313,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="number"
                   value={config.current.settings.database.port}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -333,7 +322,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="text"
                   value={config.current.settings.database.user}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -342,7 +331,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="text"
                   value={config.current.settings.database.database}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -357,7 +346,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="number"
                   value={config.current.settings.api.port}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -366,7 +355,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="text"
                   value={config.current.settings.api.base_url}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -381,7 +370,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={config.current.settings.backend.gpu_enabled}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="rounded"
                   />
                   <span className="text-sm font-medium">{t('config.enableGPU')}</span>
@@ -393,7 +382,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="number"
                     value={config.current.settings.backend.batch_size}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -402,7 +391,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="number"
                     value={config.current.settings.backend.max_workers}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -418,7 +407,7 @@ const ConfigManager: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('config.theme')}</label>
                   <select
                     value={config.current.settings.frontend.theme}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="light">Light</option>
@@ -430,7 +419,7 @@ const ConfigManager: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('config.language')}</label>
                   <select
                     value={config.current.settings.frontend.language}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="en">English</option>
@@ -446,7 +435,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={config.current.settings.frontend.features.real_time_processing}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="rounded"
                   />
                   <label className="text-sm font-medium">{t('config.realTimeProcessing')}</label>
@@ -455,7 +444,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="checkbox"
                     checked={config.current.settings.frontend.features.auto_optimization}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="rounded"
                   />
                   <label className="text-sm font-medium">{t('config.autoOptimization')}</label>
@@ -471,7 +460,7 @@ const ConfigManager: React.FC = () => {
                 <input
                   type="checkbox"
                   checked={config.current.settings.production.enable_scaling}
-                  onChange={(e) => setHasChanges(true)}
+                  onChange={() => setHasChanges(true)}
                   className="rounded"
                 />
                 <label className="text-sm font-medium">{t('config.enableScaling')}</label>
@@ -482,7 +471,7 @@ const ConfigManager: React.FC = () => {
                   <input
                     type="number"
                     value={config.current.settings.production.monitoring_interval}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -490,7 +479,7 @@ const ConfigManager: React.FC = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('config.logLevel')}</label>
                   <select
                     value={config.current.settings.production.log_level}
-                    onChange={(e) => setHasChanges(true)}
+                    onChange={() => setHasChanges(true)}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="DEBUG">DEBUG</option>

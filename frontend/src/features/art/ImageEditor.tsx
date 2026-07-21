@@ -242,27 +242,29 @@ const ImageEditor: React.FC = () => {
   return (
     <div className="flex-1 flex bg-studio-bg overflow-hidden">
       {/* Left Sidebar - Layer Management */}
-      <div className="w-64 border-r border-studio-panel-border bg-studio-panel">
-        <LayerManager 
-          canvas={fabricRef.current || null}
-          onLayerSelect={(layer) => {
-            if (layer) {
-              setSelectedLayer(parseInt(layer.id.replace('layer-', '')));
-            } else {
-              setSelectedLayer(null);
-            }
-          }}
-          selectedTool={activeTool as ToolType}
-          toolSettings={toolSettings}
-        />
+      <div className="w-64 min-w-[16rem] border-r border-studio-panel-border bg-studio-panel overflow-y-auto custom-scrollbar">
+        <div className="p-4">
+          <LayerManager 
+            canvas={fabricRef.current || null}
+            onLayerSelect={(layer) => {
+              if (layer) {
+                setSelectedLayer(parseInt(layer.id.replace('layer-', '')));
+              } else {
+                setSelectedLayer(null);
+              }
+            }}
+            selectedTool={activeTool as ToolType}
+            toolSettings={toolSettings}
+          />
+        </div>
       </div>
 
       {/* Center - Canvas Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top Toolbar */}
-        <div className="h-12 border-b border-studio-panel-bg bg-studio-panel">
+        <div className="h-12 border-b border-studio-panel-bg bg-studio-panel flex-shrink-0">
           <div className="flex items-center justify-between px-4 h-full">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               {tools.map((tool) => (
                 <button
                   key={tool.id}
@@ -279,7 +281,7 @@ const ImageEditor: React.FC = () => {
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button 
                 onClick={undo}
                 className="p-2 hover:bg-studio-panel-hover rounded-lg"
@@ -315,13 +317,14 @@ const ImageEditor: React.FC = () => {
         </div>
 
         {/* Canvas Container */}
-        <div className="flex-1 flex items-center justify-center bg-studio-panel p-4">
-          <div className="relative">
+        <div className="flex-1 flex items-center justify-center bg-studio-panel p-4 overflow-hidden">
+          <div className="relative max-w-full max-h-full">
             <canvas 
               ref={canvasRef}
               width={512}
               height={512}
-              className="border border-studio-panel-border rounded-lg bg-black"
+              className="max-w-full max-h-full border border-studio-panel-border rounded-lg bg-black"
+              style={{ maxWidth: '100%', maxHeight: '100%' }}
             />
             {/* Canvas Info Overlay */}
             <div className="absolute top-2 left-2 text-xs text-studio-text-dim bg-studio-panel/80 px-2 py-1 rounded">
@@ -332,13 +335,15 @@ const ImageEditor: React.FC = () => {
       </div>
 
       {/* Right Sidebar - Editing Tools */}
-      <div className="w-64 border-l border-studio-panel-border bg-studio-panel">
-        <EditingTools 
-          canvas={fabricRef.current || null}
-          activeTool={activeTool as ToolType}
-          onToolChange={setActiveTool}
-          onSettingsChange={handleSettingsChange}
-        />
+      <div className="w-64 min-w-[16rem] border-l border-studio-panel-border bg-studio-panel overflow-y-auto custom-scrollbar">
+        <div className="p-4">
+          <EditingTools 
+            canvas={fabricRef.current || null}
+            activeTool={activeTool as ToolType}
+            onToolChange={setActiveTool}
+            onSettingsChange={handleSettingsChange}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useMemo } from 'react';
 import { Minus, Plus, RotateCcw } from 'lucide-react';
 
 interface LayoutConfig {
@@ -65,7 +65,7 @@ const ScalableLayout: React.FC<ScalableLayoutProps> = ({ children, initialConfig
     setScale(1);
   };
 
-  const appliedConfig = {
+  const appliedConfig = useMemo(() => ({
     padding: config.padding * scale,
     borderRadius: config.borderRadius * scale,
     spacing: config.spacing * scale,
@@ -74,7 +74,7 @@ const ScalableLayout: React.FC<ScalableLayoutProps> = ({ children, initialConfig
     panelWidth: config.panelWidth * scale,
     toolPanelWidth: config.toolPanelWidth * scale,
     layerPanelWidth: config.layerPanelWidth * scale,
-  };
+  }), [config, scale]);
 
   // Create CSS variables for consistent spacing
   useEffect(() => {

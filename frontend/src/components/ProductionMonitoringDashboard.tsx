@@ -16,18 +16,6 @@ import { useTranslation } from '@/i18n/hooks/useTranslation';
 import Button from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-const formatDuration = (seconds: number): string => {
-  if (!seconds) return '0s';
-  
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  
-  if (mins > 0) {
-    return `${mins}m ${secs}s`;
-  }
-  return `${secs}s`;
-};
-
 interface SystemMetrics {
   timestamp: number;
   system: {

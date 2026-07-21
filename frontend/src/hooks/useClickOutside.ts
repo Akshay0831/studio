@@ -23,12 +23,15 @@ export function useClickOutside<T extends HTMLElement>(
     };
 
     // Add event listeners for both mouse and touch events
-    document.addEventListener('mousedown', handleClick as EventListener);
-    document.addEventListener('touchstart', handleClick as EventListener);
+    const handleMouseDown = (event: Event) => handleClick(event as unknown as MouseEvent);
+    const handleTouchStart = (event: Event) => handleClick(event as unknown as MouseEvent);
+    
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('touchstart', handleTouchStart);
 
     return () => {
-      document.removeEventListener('mousedown', handleClick as EventListener);
-      document.removeEventListener('touchstart', handleClick as EventListener);
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('touchstart', handleTouchStart);
     };
   }, [callback, buttonSelector]);
 

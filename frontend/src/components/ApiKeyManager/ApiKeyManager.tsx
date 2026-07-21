@@ -1,26 +1,19 @@
 import React, { useState } from 'react'
 import { useApiKey } from './ApiKeyContext'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/themed'
+import { Button, Badge } from '@/components/ui/themed'
+import { Alert, AlertDescription } from '@/components/ui/themed'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/themed'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/themed'
 import { Plus, Settings, Key, Trash2, Edit, Copy, CheckCircle, AlertCircle } from 'lucide-react'
 import { ApiProfileEditor } from './ApiProfileEditor'
 import { ApiKeySelector } from './ApiKeySelector'
+import { ApiProfile } from '../../types/api'
 
 export const ApiKeyManager: React.FC = () => {
-  const { state, refreshProfiles } = useApiKey()
+  const { state, addProfile, updateProfile, deleteProfile, refreshProfiles } = useApiKey()
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [editingProfile, setEditingProfile] = useState<ApiProfile | null>(null)
-
-  const currentProfile = state.currentProfile 
-    ? state.profiles[state.currentProfile]
-    : null
 
   const handleCopyToClipboard = async (text: string) => {
     try {
@@ -58,7 +51,7 @@ export const ApiKeyManager: React.FC = () => {
           {state.error && (
             <Alert variant="destructive" className="mb-4">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{state.error}</AlertDescription>
+              <AlertDescription className="text-sm">{state.error}</AlertDescription>
               <div className="mt-2">
                 <Button 
                   variant="outline" 
@@ -72,7 +65,7 @@ export const ApiKeyManager: React.FC = () => {
             </Alert>
           )}
 
-          <Tabs defaultValue="selector" className="w-full">
+          <Tabs value="selector" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="selector">API Selector</TabsTrigger>
               <TabsTrigger value="profiles">Profile Management</TabsTrigger>
@@ -102,7 +95,7 @@ export const ApiKeyManager: React.FC = () => {
                     <ApiProfileEditor 
                       onSubmit={async (profile) => {
                         try {
-                          await useApiKey().addProfile(profile)
+                          await addProfile(profile)
                           setShowAddDialog(false)
                         } catch (error) {
                           // Error will be handled by the context
@@ -117,7 +110,10 @@ export const ApiKeyManager: React.FC = () => {
 
               <div className="space-y-3">
                 {Object.values(state.profiles).map((profile) => (
-                  <Card key={profile.id} className={profile.is_active ? 'border-green-200' : 'border-gray-200'}>
+                  <Card 
+                    key={profile.id}
+                    className={profile.is_active ? 'border-green-200/30' : ''}
+                  >
                     <CardContent className="pt-4">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -134,7 +130,7 @@ export const ApiKeyManager: React.FC = () => {
                             )}
                           </div>
                           
-                          <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                          <div className="grid grid-cols-2 gap-4 text-sm text-studio-text-dim">
                             <div>
                               <span className="font-medium">Models:</span>
                               <span className="ml-1">
@@ -185,8 +181,8 @@ export const ApiKeyManager: React.FC = () => {
                             size="sm"
                             onClick={() => {
                               if (confirm(`Are you sure you want to delete the profile "${profile.name}"?`)) {
-                                useApiKey().deleteProfile(profile.id)
-                                  .catch(error => {
+                                deleteProfile(profile.id)
+                                  .catch((error: any) => {
                                     console.error('Failed to delete profile:', error)
                                     // Error will be handled by the context
                                   })
@@ -217,7 +213,7 @@ export const ApiKeyManager: React.FC = () => {
                       profile={editingProfile}
                       onSubmit={async (profile) => {
                         try {
-                          await useApiKey().updateProfile(editingProfile.id, profile)
+                          await updateProfile(editingProfile.id, profile)
                           setEditingProfile(null)
                         } catch (error) {
                           // Error will be handled by the context

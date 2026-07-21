@@ -3,6 +3,7 @@ import * as Y from 'yjs';
 import { ExtensionManifest } from '../features/registry';
 import { useStudioStore } from '../core/useStudioStore';
 import { useWorktree } from '../core/useWorktree';
+import { ApiKeySidebar } from '../features/common/ApiKeySidebar';
 
 interface ChatPanelProps {
   activeExtension: ExtensionManifest;
@@ -36,7 +37,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({ activeExtension }) => {
       </div>
 
       <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-8 custom-scrollbar bg-[#1a1a1a]/50">
-        <activeExtension.sidebarControls />
+        <ApiKeySidebar />
 
         {proposalList.length > 0 && (
           <div className="flex flex-col gap-3 pt-6 border-t border-studio-border/30">

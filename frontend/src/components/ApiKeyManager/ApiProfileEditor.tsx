@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { ApiProfile } from '../../types/api'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card'
-import { Button } from '../ui/button'
-import { Input } from '../ui/input'
-import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
-import { Checkbox } from '../ui/checkbox'
-import { Badge } from '../ui/badge'
-import { Alert, AlertDescription } from '../ui/alert'
-import { Key, AlertCircle, Plus, X } from 'lucide-react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/themed'
+import { Button } from '@/components/ui/themed'
+import { Input } from '@/components/ui/themed'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/themed'
+import { Checkbox } from '@/components/ui/themed'
+import { Badge } from '@/components/ui/themed'
+import { Label } from '@/components/ui/themed'
+import { Key } from 'lucide-react'
 
 interface ApiProfileEditorProps {
   profile?: ApiProfile | null
@@ -156,7 +155,6 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
     }
   }
 
-  const currentProvider = API_PROVIDERS.find(p => p.value === formData.api_type)
   const availableModels = API_MODELS[formData.api_type] || []
 
   return (
@@ -177,7 +175,7 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               placeholder="e.g., My Replicate Account"
             />
             {errors.name && <p className="text-sm text-red-600">{errors.name}</p>}
@@ -185,7 +183,7 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
 
           <div className="space-y-2">
             <Label htmlFor="api_type">API Provider</Label>
-            <Select value={formData.api_type} onValueChange={(value) => setFormData(prev => ({ ...prev, api_type: value }))}>
+            <Select value={formData.api_type} onValueChange={(value: string) => setFormData(prev => ({ ...prev, api_type: value }))}>
               <SelectTrigger>
                 <SelectValue placeholder="Select API provider" />
               </SelectTrigger>
@@ -208,7 +206,7 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
               id="api_key"
               type="password"
               value={formData.api_key}
-              onChange={(e) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, api_key: e.target.value }))}
               placeholder="Enter your API key"
             />
             {errors.api_key && <p className="text-sm text-red-600">{errors.api_key}</p>}
@@ -217,10 +215,11 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
           <div className="space-y-2">
             <Label htmlFor="active">Active Status</Label>
             <div className="flex items-center space-x-2">
-              <Checkbox
+              <input
                 id="active"
+                type="checkbox"
                 checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, is_active: checked as boolean }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
               />
               <Label htmlFor="active" className="text-sm">Enable this profile (disabled profiles cannot be used)</Label>
             </div>
@@ -231,10 +230,8 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
             <Input
               id="rate_limit"
               type="number"
-              value={formData.rate_limit}
-              onChange={(e) => handleRateLimitChange(e.target.value)}
-              min="1"
-              max="1000"
+              value={formData.rate_limit.toString()}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleRateLimitChange(e.target.value)}
             />
             <p className="text-xs text-gray-600">Maximum requests allowed per minute</p>
           </div>
@@ -270,7 +267,7 @@ export const ApiProfileEditor: React.FC<ApiProfileEditorProps> = ({ profile, onS
           {selectedModels.length > 0 && (
             <div className="space-y-2">
               <Label htmlFor="default_model">Default Model</Label>
-              <Select value={formData.default_model} onValueChange={(value) => setFormData(prev => ({ ...prev, default_model: value }))}>
+              <Select value={formData.default_model} onValueChange={(value: string) => setFormData(prev => ({ ...prev, default_model: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select default model" />
                 </SelectTrigger>

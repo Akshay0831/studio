@@ -1,9 +1,11 @@
 import React from 'react';
-import { Image, Music } from 'lucide-react';
+import { Image, Music, Key } from 'lucide-react';
 import ImageEditor from './art/ImageEditor';
 import { ArtControls } from './art/ArtControls';
 import AudioMixer from './audio/AudioMixer';
 import { AudioControls } from './audio/AudioControls';
+import { ApiKeyManager } from '../components/ApiKeyManager';
+import { ApiKeySidebar } from './common/ApiKeySidebar';
 
 export interface ExtensionManifest {
   id: string;
@@ -50,6 +52,18 @@ export const EXTENSION_REGISTRY: ExtensionManifest[] = [
         { name: 'Drums', volume: 0, pan: 0, active: true },
         { name: 'Ambient', volume: 0, pan: 0, active: false },
       ]
+    }
+  },
+  {
+    id: 'api-keys',
+    name: 'API Manager',
+    icon: Key,
+    primaryView: ApiKeyManager,
+    sidebarControls: ApiKeySidebar,
+    stateKey: 'api',
+    initialState: {
+      activeProfiles: [],
+      selectedProvider: null
     }
   }
 ];

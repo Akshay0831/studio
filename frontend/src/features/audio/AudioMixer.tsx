@@ -128,7 +128,7 @@ const AudioMixer: React.FC = () => {
       <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0a0a]">
         <div className="flex-1 flex p-6 gap-4 overflow-x-auto custom-scrollbar items-start">
           {layers.map((layer, index) => (
-            <div key={layer.name} className={`w-48 flex-shrink-0 bg-studio-panel border border-studio-border rounded-xl p-4 flex flex-col shadow-xl transition-all hover:border-studio-border-bright ${!layer.active && 'opacity-40 grayscale-[0.5]'}`}>
+            <div key={layer.name} className={`w-48 min-w-[12rem] flex-shrink-0 bg-studio-panel border border-studio-border rounded-xl p-4 flex flex-col shadow-xl transition-all hover:border-studio-border-bright ${!layer.active && 'opacity-40 grayscale-[0.5]'}`}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex flex-col">
                   <span className="text-[11px] font-black uppercase tracking-tighter text-studio-text">{layer.name}</span>
@@ -143,7 +143,7 @@ const AudioMixer: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex-1 flex gap-4 mb-6 h-48">
+              <div className="flex-1 flex gap-4 mb-6 h-48 min-h-[12rem]">
                 <div className="w-8 bg-black/60 rounded-lg relative overflow-hidden flex flex-col justify-end p-1 border border-studio-border/50 group">
                   <input 
                     type="range" 
@@ -195,7 +195,7 @@ const AudioMixer: React.FC = () => {
         </div>
         
         {showPianoRoll && (
-          <div className="h-64 border-t border-studio-border bg-studio-panel p-4 overflow-hidden shadow-[0_-10px_20px_rgba(0,0,0,0.5)] z-20">
+          <div className="h-64 min-h-[16rem] border-t border-studio-border bg-studio-panel p-4 overflow-hidden shadow-[0_-10px_20px_rgba(0,0,0,0.5)] z-20">
             <PianoRoll />
           </div>
         )}

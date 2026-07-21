@@ -18,13 +18,13 @@ export interface ThemedInputProps {
 
 const baseStyles = 'flex w-full rounded-md border transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 
-const variantStyles = {
+const variantStyles: Record<string, string> = {
   default: 'border-border bg-card hover:border-hover focus:border-accent focus:ring-accent',
   filled: 'border-transparent bg-hover hover:bg-hover/80 focus:bg-hover focus:ring-accent',
   outlined: 'border-2 border-border bg-transparent hover:border-hover focus:border-accent focus:ring-accent'
 };
 
-const sizeStyles = {
+const sizeStyles: Record<string, string> = {
   sm: 'h-9 px-3 text-xs',
   md: 'h-10 px-4 py-2 text-sm',
   lg: 'h-11 px-5 text-base'

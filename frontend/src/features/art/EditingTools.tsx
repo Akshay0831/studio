@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import fabric, { Canvas, FabricObject, Path, Point } from 'fabric';
+import * as fabric from 'fabric';
+import { Canvas, FabricObject, Path, Point } from 'fabric';
 import { 
   MousePointer2, Square, Circle, Edit2, Scissors, Droplet, Eraser, 
   Move, RotateCcw, RotateCw, FlipHorizontal, FlipVertical, 
